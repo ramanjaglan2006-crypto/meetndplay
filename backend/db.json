@@ -1,0 +1,419 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "name": "Raman",
+      "sport_type": "Badminton",
+      "skill_level": 4,
+      "play_level": "State",
+      "location_name": "Indore, MP",
+      "preferred_time": "6:00 PM - 9:00 PM",
+      "lat": 23.222833149017287,
+      "lon": 77.40673059508802,
+      "photos": [
+        "/profile1.png",
+        "https://images.unsplash.com/photo-1626248801379-51a0748a5f96?w=400"
+      ],
+      "sports": [
+        "Badminton",
+        "Cricket",
+        "Table Tennis"
+      ]
+    },
+    {
+      "id": "u2",
+      "name": "John",
+      "sport_type": "Football",
+      "skill_level": 3,
+      "play_level": "District",
+      "location_name": "Bhopal, MP",
+      "preferred_time": "5:00 AM - 8:00 AM",
+      "lat": 23.2599,
+      "lon": 77.4126,
+      "photos": [
+        "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?w=400"
+      ],
+      "sports": [
+        "Football",
+        "Basketball"
+      ]
+    },
+    {
+      "id": "u100",
+      "name": "Amit",
+      "age": 30,
+      "sport_type": "Football",
+      "skill_level": 3,
+      "lat": 22.669473836345876,
+      "lon": 75.78526173757646,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Amit"
+      ],
+      "sports": [
+        "Football"
+      ],
+      "bio": "Hey, I'm Amit! Always down for a good match."
+    },
+    {
+      "id": "u101",
+      "name": "Rahul",
+      "age": 22,
+      "sport_type": "Basketball",
+      "skill_level": 5,
+      "lat": 22.703829171052483,
+      "lon": 75.76323047289854,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Rahul"
+      ],
+      "sports": [
+        "Badminton"
+      ],
+      "bio": "Hey, I'm Rahul! Always down for a good match."
+    },
+    {
+      "id": "u102",
+      "name": "Priya",
+      "age": 22,
+      "sport_type": "Tennis",
+      "skill_level": 2,
+      "lat": 22.693855140959975,
+      "lon": 75.84570321820205,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Priya"
+      ],
+      "sports": [
+        "Football"
+      ],
+      "bio": "Hey, I'm Priya! Always down for a good match."
+    },
+    {
+      "id": "u103",
+      "name": "Sneha",
+      "age": 22,
+      "sport_type": "Tennis",
+      "skill_level": 5,
+      "lat": 22.740320823517163,
+      "lon": 75.75178378740712,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Sneha"
+      ],
+      "sports": [
+        "Badminton"
+      ],
+      "bio": "Hey, I'm Sneha! Always down for a good match."
+    },
+    {
+      "id": "u104",
+      "name": "Vikram",
+      "age": 27,
+      "sport_type": "Football",
+      "skill_level": 3,
+      "lat": 22.718318141357468,
+      "lon": 75.75164388146574,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Vikram"
+      ],
+      "sports": [
+        "Tennis"
+      ],
+      "bio": "Hey, I'm Vikram! Always down for a good match."
+    },
+    {
+      "id": "u105",
+      "name": "Anjali",
+      "age": 21,
+      "sport_type": "Football",
+      "skill_level": 5,
+      "lat": 22.741751566753702,
+      "lon": 75.80685043010044,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Anjali"
+      ],
+      "sports": [
+        "Badminton"
+      ],
+      "bio": "Hey, I'm Anjali! Always down for a good match."
+    },
+    {
+      "id": "u106",
+      "name": "Karan",
+      "age": 31,
+      "sport_type": "Tennis",
+      "skill_level": 4,
+      "lat": 22.665795524840437,
+      "lon": 75.78963675747757,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Karan"
+      ],
+      "sports": [
+        "Badminton"
+      ],
+      "bio": "Hey, I'm Karan! Always down for a good match."
+    },
+    {
+      "id": "u107",
+      "name": "Neha",
+      "age": 23,
+      "sport_type": "Tennis",
+      "skill_level": 4,
+      "lat": 22.691890258190128,
+      "lon": 75.84799140537645,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Neha"
+      ],
+      "sports": [
+        "Badminton"
+      ],
+      "bio": "Hey, I'm Neha! Always down for a good match."
+    },
+    {
+      "id": "u108",
+      "name": "Rohan",
+      "age": 31,
+      "sport_type": "Football",
+      "skill_level": 1,
+      "lat": 22.679340562322825,
+      "lon": 75.8040359918249,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Rohan"
+      ],
+      "sports": [
+        "Tennis"
+      ],
+      "bio": "Hey, I'm Rohan! Always down for a good match."
+    },
+    {
+      "id": "u109",
+      "name": "Pooja",
+      "age": 18,
+      "sport_type": "Tennis",
+      "skill_level": 5,
+      "lat": 22.714568930201516,
+      "lon": 75.8178897599567,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Pooja"
+      ],
+      "sports": [
+        "Basketball"
+      ],
+      "bio": "Hey, I'm Pooja! Always down for a good match."
+    },
+    {
+      "id": "u110",
+      "name": "Siddharth",
+      "age": 20,
+      "sport_type": "Badminton",
+      "skill_level": 4,
+      "lat": 22.669420318929358,
+      "lon": 75.77698519014878,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Siddharth"
+      ],
+      "sports": [
+        "Basketball"
+      ],
+      "bio": "Hey, I'm Siddharth! Always down for a good match."
+    },
+    {
+      "id": "u111",
+      "name": "Aditi",
+      "age": 32,
+      "sport_type": "Badminton",
+      "skill_level": 1,
+      "lat": 22.67786498510902,
+      "lon": 75.76260868172628,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Aditi"
+      ],
+      "sports": [
+        "Tennis"
+      ],
+      "bio": "Hey, I'm Aditi! Always down for a good match."
+    },
+    {
+      "id": "u112",
+      "name": "Gaurav",
+      "age": 19,
+      "sport_type": "Basketball",
+      "skill_level": 4,
+      "lat": 22.680677386075256,
+      "lon": 75.82583669988337,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Gaurav"
+      ],
+      "sports": [
+        "Basketball"
+      ],
+      "bio": "Hey, I'm Gaurav! Always down for a good match."
+    },
+    {
+      "id": "u113",
+      "name": "Nidhi",
+      "age": 29,
+      "sport_type": "Football",
+      "skill_level": 5,
+      "lat": 22.687565475533972,
+      "lon": 75.77687268893779,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Nidhi"
+      ],
+      "sports": [
+        "Basketball"
+      ],
+      "bio": "Hey, I'm Nidhi! Always down for a good match."
+    },
+    {
+      "id": "u114",
+      "name": "Tarun",
+      "age": 29,
+      "sport_type": "Basketball",
+      "skill_level": 2,
+      "lat": 22.69769035621606,
+      "lon": 75.76441295076845,
+      "photos": [
+        "https://i.pravatar.cc/150?u=Tarun"
+      ],
+      "sports": [
+        "Football"
+      ],
+      "bio": "Hey, I'm Tarun! Always down for a good match."
+    },
+    {
+      "id": "u1777159780413",
+      "name": "Raman kumar",
+      "email": "ramanjaglan11@gmail.com",
+      "password": "$2b$10$N4.uKWmfaYXBwgfJ2SA6IeSyQ.2./DGkXUflR.SZRMzo2Hmn.WMTC",
+      "lat": 22.7,
+      "lon": 75.8,
+      "sports": [
+        "Football"
+      ],
+      "skill_level": 3,
+      "age": 20,
+      "bio": "Ready to play!",
+      "photos": [
+        "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?w=400"
+      ]
+    }
+  ],
+  "matches": [
+    {
+      "id": "m1",
+      "hostId": "u2",
+      "sport": "Football",
+      "location": "Power Play Arena",
+      "lat": 23.25,
+      "lon": 77.42,
+      "dateTime": "2026-04-18T23:30:00Z",
+      "totalPlayers": 12,
+      "joinedPlayers": [
+        "u2"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "m2",
+      "hostId": "u1",
+      "sport": "Badminton",
+      "location": "Active Sports Club",
+      "lat": 22.72,
+      "lon": 75.86,
+      "dateTime": "2026-04-19T10:00:00Z",
+      "totalPlayers": 4,
+      "joinedPlayers": [],
+      "status": "open"
+    }
+  ],
+  "communities": [
+    {
+      "id": "c1",
+      "name": "Football LNCT",
+      "icon": "FL",
+      "admin": "u1",
+      "sport": "Football",
+      "members": [
+        "u1",
+        "u2"
+      ]
+    },
+    {
+      "id": "c2",
+      "name": "Badminton Pros",
+      "icon": "BP",
+      "admin": "u2",
+      "sport": "Badminton",
+      "members": [
+        "u1",
+        "u2"
+      ]
+    }
+  ],
+  "channels": [
+    {
+      "id": "ch1",
+      "communityId": "c1",
+      "name": "general",
+      "type": "text"
+    },
+    {
+      "id": "ch2",
+      "communityId": "c1",
+      "name": "match-discussion",
+      "type": "text"
+    },
+    {
+      "id": "ch3",
+      "communityId": "c2",
+      "name": "general",
+      "type": "text"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg1",
+      "channelId": "ch1",
+      "senderId": "u2",
+      "senderName": "John",
+      "content": "Hey everyone! Welcome to the new server.",
+      "createdAt": "2026-04-25T20:00:00Z"
+    }
+  ],
+  "tournaments": [
+    {
+      "id": "t1",
+      "name": "Inter-College Football Cup",
+      "sport": "Football",
+      "organizerId": "u2",
+      "startDate": "2024-05-15",
+      "location": "Indore Sports Complex",
+      "entryFee": "₹500",
+      "prizePool": "₹10,000",
+      "teamsRegistered": [
+        "Red Wings",
+        "Blue Bolts"
+      ],
+      "status": "upcoming"
+    }
+  ],
+  "swipes": [
+    {
+      "userId": "u2",
+      "targetUserId": "u1",
+      "action": "right",
+      "timestamp": "2026-04-26T00:00:00Z"
+    },
+    {
+      "userId": "u1",
+      "targetUserId": "u2",
+      "action": "right",
+      "timestamp": "2026-04-25T22:42:14.019Z"
+    }
+  ],
+  "player_matches": [
+    {
+      "id": "pm1777156934019",
+      "user1": "u1",
+      "user2": "u2"
+    }
+  ]
+}
