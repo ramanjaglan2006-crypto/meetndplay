@@ -15,7 +15,7 @@ const io = new Server(server, {
     cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 const AI_SERVICE_URL = 'http://localhost:8000';
 const DB_PATH = path.join(__dirname, 'db.json');
 
