@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 // import { getCommunityMessages } from '../services/api'; // Deprecated
 import { ArrowLeft, Send } from 'lucide-react';
 
-const socket = io('http://localhost:5001');
+const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001');
 
 const Chat = () => {
   const { id } = useParams();

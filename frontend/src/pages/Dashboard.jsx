@@ -5,7 +5,7 @@ import MatchCard from '../components/MatchCard';
 import { Bell, Sparkles, Filter, Moon, Sun } from 'lucide-react';
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:5001');
+const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001');
 
 const Dashboard = ({ theme, toggleTheme }) => {
   const queryClient = useQueryClient();
