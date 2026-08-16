@@ -7,7 +7,7 @@ const BottomNav = () => {
     { to: '/', icon: Home, label: 'Home' },
     { to: '/discover', icon: Search, label: 'Match' },
     { to: '/tournaments', icon: Trophy, label: 'Events' },
-    { to: '/community', icon: Users, label: 'Social' },
+    { to: '/communities', icon: Users, label: 'Social' },
     { to: '/profile', icon: User, label: 'Profile' }
   ];
 

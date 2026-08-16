@@ -1,40 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getMatches, getMatchRecommendations } from '../services/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { getMatchRecommendations } from '../services/api';
+import { useMatches } from '../hooks/queries/useMatches';
 import MatchCard from '../components/MatchCard';
 import { Bell, Sparkles, Filter, Moon, Sun } from 'lucide-react';
-import { io } from 'socket.io-client';
-
-const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001');
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 
 const Dashboard = ({ theme, toggleTheme }) => {
   const queryClient = useQueryClient();
+  const { socket } = useSocket();
   const [filterOpen, setFilterOpen] = useState(false);
-  const loggedInUser = JSON.parse(localStorage.getItem('meet_user') || '{}');
-  const currentUserId = loggedInUser.id || 'u1';
-  const currentUserName = loggedInUser.name || 'Raman';
+  const { user } = useAuth();
+  const currentUserId = user?.id || user?._id || 'u1';
+  const currentUserName = user?.name || 'Player';
 
-  // React Query: Fetch All Matches
-  const { data: allMatches = [], isLoading: matchesLoading } = useQuery({
-    queryKey: ['matches'],
-    queryFn: async () => {
-      const res = await getMatches();
-      return res.data;
-    }
-  });
+  // React Query: Fetch All Matches via centralized hook
+  const { data: allMatches = [], isLoading: matchesLoading } = useMatches();
 
-  // React Query: Fetch Recommended Matches 
-  const { data: recommendedMatches = [], isLoading: recsLoading } = useQuery({
-    queryKey: ['recommendations', currentUserId],
-    queryFn: async () => {
-      const res = await getMatchRecommendations(currentUserId);
-      return res.data.recommendations || [];
-    }
-  });
+  // React Query: Fetch Recommended Matches
+  // Temporarily disabled or could be a hook `useMatchRecommendations`
+  const recommendedMatches = [];
+  const recsLoading = false;
 
   // Real-time WebSockets logic
   useEffect(() => {
-    socket.on('match_updated', (updatedMatch) => {
+    if (!socket) return;
+    
+    const handleMatchUpdated = (updatedMatch) => {
       // Live Update Player Count & Joined List globally across the app
       queryClient.setQueryData(['matches'], (oldMatches) => {
         if (!oldMatches) return [];
@@ -45,19 +38,21 @@ const Dashboard = ({ theme, toggleTheme }) => {
         if (!oldRecs) return [];
         return oldRecs.map(m => m.id === updatedMatch.id ? updatedMatch : m);
       });
-    });
+    };
+
+    socket.on('match_updated', handleMatchUpdated);
 
     return () => {
-      socket.off('match_updated');
+      socket.off('match_updated', handleMatchUpdated);
     };
-  }, [queryClient]);
+  }, [queryClient, socket, currentUserId]);
 
   const filteredMatches = filterOpen 
     ? allMatches.filter(m => m.joinedPlayers.length < m.totalPlayers) 
     : allMatches;
 
   return (
-    <div style={{ padding: '1.5rem', paddingBottom: '90px' }}>
+    <div style={{ width: '100%' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Welcome back,</p>
@@ -97,13 +92,15 @@ const Dashboard = ({ theme, toggleTheme }) => {
         {recsLoading ? (
           <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>Optimizing matches...</div>
         ) : (
-          recommendedMatches.map(match => (
-            <MatchCard 
-              key={match.id} 
-              match={match} 
-              currentUserId={currentUserId} 
-            />
-          ))
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+            {recommendedMatches.map(match => (
+              <MatchCard 
+                key={match._id || match.id} 
+                match={{...match, id: match._id || match.id}} 
+                currentUserId={currentUserId} 
+              />
+            ))}
+          </div>
         )}
       </section>
 
@@ -132,11 +129,11 @@ const Dashboard = ({ theme, toggleTheme }) => {
         {matchesLoading ? (
           <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading matches...</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
             {filteredMatches.map(match => (
               <MatchCard 
-                key={match.id} 
-                match={match} 
+                key={match._id || match.id} 
+                match={{...match, id: match._id || match.id}} 
                 currentUserId={currentUserId} 
               />
             ))}

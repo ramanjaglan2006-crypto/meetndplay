@@ -2,7 +2,7 @@
   "name": "meet-u",
   "version": "1.0.0",
   "scripts": {
-    "backend": "cd backend && node index.js",
+    "backend": "cd backend && node server.js",
     "ai": "cd ai_service && source venv/bin/activate && python main.py",
     "frontend": "cd frontend && npm run dev",
     "start": "npm-run-all --parallel backend ai frontend"

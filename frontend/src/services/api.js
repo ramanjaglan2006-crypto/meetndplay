@@ -2,8 +2,41 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
+const API = axios.create({
+    baseURL: API_BASE_URL,
+    withCredentials: true
+});
+
+// Intercept 401s globally to clear session
+API.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            window.dispatchEvent(new Event('unauthorized'));
+        }
+        return Promise.reject(error);
+    }
+);
+
+// Global axios configuration for cookies
+axios.defaults.withCredentials = true;
+
+// Optional: Add global interceptor to handle 401 Unauthorized
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Trigger a custom event that AuthProvider can listen to
+      window.dispatchEvent(new Event('unauthorized'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const loginUser = (email, password, currentLat, currentLon) => axios.post(`${API_BASE_URL}/auth/login`, { email, password, currentLat, currentLon });
 export const signupUser = (userData) => axios.post(`${API_BASE_URL}/auth/signup`, userData);
+export const logoutUser = () => axios.post(`${API_BASE_URL}/auth/logout`);
+export const getCurrentUser = () => axios.get(`${API_BASE_URL}/auth/me`);
 
 export const getPlayers = () => axios.get(`${API_BASE_URL}/players`);
 export const getRecommendations = (userId) => axios.post(`${API_BASE_URL}/recommendations`, { userId }); // Legacy
@@ -11,9 +44,31 @@ export const getMatchRecommendations = (userId) => axios.post(`${API_BASE_URL}/r
 export const getDiscoverUsers = (userId, lat, lon, page = 1) => axios.get(`${API_BASE_URL}/users/discover`, { params: { userId, lat, lon, page, limit: 12 } });
 export const postSwipe = (userId, targetUserId, action) => axios.post(`${API_BASE_URL}/swipe`, { userId, targetUserId, action });
 
-export const getCommunities = () => axios.get(`${API_BASE_URL}/communities`);
-export const createCommunity = (data) => axios.post(`${API_BASE_URL}/communities/create`, data);
-export const joinCommunity = (id, userId) => axios.post(`${API_BASE_URL}/communities/${id}/join`, { userId });
+// Communities
+export const getCommunities = (params) => API.get('/communities', { params });
+export const getCommunityBySlug = (slug) => API.get(`/communities/${slug}`);
+export const createCommunity = (data) => API.post('/communities', data);
+export const joinCommunity = (id) => API.post(`/communities/${id}/join`);
+export const leaveCommunity = (id) => API.delete(`/communities/${id}/leave`);
+export const getCommunityMembers = (id) => API.get(`/communities/${id}/members`);
+
+// Community Posts
+export const getCommunityPosts = (communityId, params) => API.get(`/communities/${communityId}/posts`, { params });
+export const createCommunityPost = (communityId, data) => API.post(`/communities/${communityId}/posts`, data);
+export const likeCommunityPost = (postId) => API.post(`/communities/posts/${postId}/like`);
+export const getCommunityComments = (postId) => API.get(`/communities/posts/${postId}/comments`);
+export const addCommunityComment = (postId, data) => API.post(`/communities/posts/${postId}/comments`, data);
+
+// Community Chat APIs
+export const getCommunityChatMessages = (communityId, cursor = null) => {
+    let url = `/communities/${communityId}/messages?limit=50`;
+    if (cursor) url += `&cursor=${cursor}`;
+    return API.get(url);
+};
+export const sendCommunityChatMessage = (communityId, data) => API.post(`/communities/${communityId}/messages`, data);
+export const deleteCommunityChatMessage = (communityId, messageId) => API.delete(`/communities/${communityId}/messages/${messageId}`);
+
+// Discord/Chat Legacy Channels
 export const getChannels = (communityId) => axios.get(`${API_BASE_URL}/channels/${communityId}`);
 export const getMessages = (channelId) => axios.get(`${API_BASE_URL}/messages/${channelId}`);
 
@@ -27,8 +82,9 @@ export const inviteToMatch = (matchId, targetUserIds) => axios.post(`${API_BASE_
 export const getTournaments = () => axios.get(`${API_BASE_URL}/tournaments`);
 export const registerTournament = (tournamentId, teamName) => axios.post(`${API_BASE_URL}/tournaments/register`, { tournamentId, teamName });
 
-export const getUserProfile = (userId) => axios.get(`${API_BASE_URL}/users/${userId}`);
-export const updateUserProfile = (userData) => axios.put(`${API_BASE_URL}/users/update`, userData);
+export const getUserProfile = (userId) => API.get(`/users/${userId}/profile`);
+export const getMyProfile = () => API.get(`/users/profile`);
+export const updateUserProfile = (userData) => API.patch(`/users/profile`, userData);
 
 // Connections
 export const sendConnectionRequest = (senderId, receiverId) => axios.post(`${API_BASE_URL}/connections/request`, { senderId, receiverId });

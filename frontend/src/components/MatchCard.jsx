@@ -43,7 +43,7 @@ const InviteModal = ({ matchId, currentUserId, onClose }) => {
 
 const MatchCard = ({ match, currentUserId }) => {
   const navigate = useNavigate();
-  const [isJoined, setIsJoined] = useState(match.joinedPlayers.includes(currentUserId));
+  const [isJoined, setIsJoined] = useState(match.joinedPlayers.some(p => (p._id || p) === currentUserId));
   const [joinedCount, setJoinedCount] = useState(match.joinedPlayers.length);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -54,7 +54,7 @@ const MatchCard = ({ match, currentUserId }) => {
   const slotsLeft = match.totalPlayers - joinedCount;
   
   useEffect(() => {
-    setIsJoined(match.joinedPlayers.includes(currentUserId));
+    setIsJoined(match.joinedPlayers.some(p => (p._id || p) === currentUserId));
     setJoinedCount(match.joinedPlayers.length);
   }, [match.joinedPlayers, currentUserId]);
   
@@ -109,7 +109,7 @@ const MatchCard = ({ match, currentUserId }) => {
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            <MapPin size={14} /> {match.location}
+            <MapPin size={14} /> {match.locationName || 'Local Pitch'}
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -180,8 +180,8 @@ const MatchCard = ({ match, currentUserId }) => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {roster.map(player => (
                       <div 
-                          key={player.id} 
-                          onClick={() => navigate(`/profile/${player.id}`, { state: { matchContext: `Playing in: ${match.sport} match at ${match.location}` } })}
+                          key={player._id || player.id} 
+                          onClick={() => navigate(`/profile/${player._id || player.id}`, { state: { matchContext: `Playing in: ${match.sport} match at ${match.locationName}` } })}
                           style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }}
                           onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                           onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}

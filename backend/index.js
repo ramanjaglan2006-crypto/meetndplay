@@ -8,6 +8,7 @@ const axios = require('axios');
 const redis = require('redis');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,8 +20,14 @@ const PORT = process.env.PORT || 5001;
 const AI_SERVICE_URL = 'http://localhost:8000';
 const DB_PATH = path.join(__dirname, 'db.json');
 
-app.use(cors());
+const corsOptions = {
+    origin: 'http://localhost:5173',
+    credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 
 // --- Fast In-Memory Cache Setup ---
 const appCache = new Map();
@@ -121,7 +128,15 @@ app.post('/api/auth/signup', async (req, res) => {
     saveDB(db);
     
     const token = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ token, user: newUser });
+    res.cookie('meet_session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+    // Don't send password back
+    const { password: _, ...userWithoutPassword } = newUser;
+    res.status(201).json({ user: userWithoutPassword });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -141,8 +156,54 @@ app.post('/api/auth/login', async (req, res) => {
         saveDB(db);
     }
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user });
+    res.cookie('meet_session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({ user: userWithoutPassword });
 });
+
+app.get('/api/auth/me', (req, res) => {
+    const token = req.cookies.meet_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const db = getDB();
+        const user = db.users.find(u => u.id === decoded.userId);
+        if (!user) return res.status(401).json({ error: 'User not found' });
+        
+        const { password: _, ...userWithoutPassword } = user;
+        res.json({ user: userWithoutPassword });
+    } catch (err) {
+        res.status(401).json({ error: 'Invalid session' });
+    }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    res.clearCookie('meet_session', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+    });
+    res.json({ success: true });
+});
+
+// Middleware for protected routes
+const requireAuth = (req, res, next) => {
+    const token = req.cookies.meet_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.userId = decoded.userId;
+        next();
+    } catch (err) {
+        res.status(401).json({ error: 'Invalid session' });
+    }
+};
 app.get('/api/matches', async (req, res) => {
     const matches = await fetchWithCache('matches:all', 60, () => getDB().matches);
     res.json(matches);

@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getDiscoverUsers, postSwipe, sendConnectionRequest, getUserProfile, getMatches, joinMatch } from '../services/api';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, X, MapPin, UserPlus, Search, Users, Calendar, Fingerprint, Crosshair, Filter, Navigation } from 'lucide-react';
+import { Heart, X, MapPin, UserPlus, Search, Users, Calendar, Fingerprint, Crosshair, Filter, Navigation, RefreshCw } from 'lucide-react';
+import MatchCard from '../components/MatchCard';
+import { useAuth } from '../context/AuthContext';
 
 export default function Discover() {
-    const user = JSON.parse(localStorage.getItem('meet_user') || '{}');
-    const currentUserId = user.id || 'u1';
+    const { user } = useAuth();
+    const currentUserId = user?.id || 'u1';
     const navigate = useNavigate();
     
     // Core state
     const [activeTab, setActiveTab] = useState('players'); // 'players', 'matches', 'search'
-    const [location, setLocation] = useState({ lat: 22.7196, lon: 75.8577 });
+    const [location, setLocation] = useState(null);
+    const [locationError, setLocationError] = useState(false);
+    const [manualCity, setManualCity] = useState('');
     
     // Players Tab State
     const [players, setPlayers] = useState([]);
-    const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [page, setPage] = useState(1);
     
     // Filters State
@@ -31,65 +35,57 @@ export default function Discover() {
 
     // Matches Tab State
     const [activeMatches, setActiveMatches] = useState([]);
-    const [loadingMatches, setLoadingMatches] = useState(false);
+
+    // Players Query
+    const { data: rawPlayers = [], isLoading: loadingPlayers, refetch: refetchPlayers } = useQuery({
+        queryKey: ['discoverPlayers', currentUserId, location?.lat, location?.lon, page],
+        queryFn: async () => {
+            if (!location) return []; // Wait for location
+            const res = await getDiscoverUsers(currentUserId, location.lat, location.lon, page);
+            return res.data;
+        },
+        enabled: activeTab === 'players' && !!location
+    });
+
+    // Matches Query
+    const { data: rawMatches = [], isLoading: loadingMatches, refetch: refetchMatches } = useQuery({
+        queryKey: ['activeMatches'],
+        queryFn: async () => {
+            const res = await getMatches();
+            return res.data;
+        },
+        enabled: activeTab === 'matches'
+    });
 
     useEffect(() => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-                () => console.warn('Using default coordinates')
-            );
+        if (rawPlayers.length > 0) {
+            setPlayers(prev => {
+                if (page === 1) return rawPlayers;
+                const existing = new Set(prev.map(p => p.id));
+                const newIds = rawPlayers.filter(p => !existing.has(p.id));
+                return [...prev, ...newIds];
+            });
         }
-    }, []);
+    }, [rawPlayers, page]);
 
     useEffect(() => {
-        if (activeTab === 'players') loadPlayers(1, true);
-        if (activeTab === 'matches') loadMatches();
-    }, [activeTab, location]);
+        if (rawMatches.length > 0) {
+            setActiveMatches(rawMatches.filter(m => m.status === 'open'));
+        }
+    }, [rawMatches]);
 
-    const loadPlayers = async (pageNum = 1, reset = false) => {
-        setLoadingPlayers(true);
-        try {
-            // Note: In a real app, pass filters to backend. 
-            // Our backend currently auto-filters by similar skill/sport, but we'll fetch and do client-side if needed for MVP.
-            const res = await getDiscoverUsers(currentUserId, location.lat, location.lon, pageNum);
-            
-            let fetchedPlayers = res.data;
-            // Client side filter application
-            if (sportFilter !== 'All') {
-                fetchedPlayers = fetchedPlayers.filter(p => (p.sports || [p.sport_type]).includes(sportFilter));
-            }
-            if (skillFilter !== 'All') {
-                fetchedPlayers = fetchedPlayers.filter(p => p.skill_level === parseInt(skillFilter));
-            }
-
-            if (reset) {
-                setPlayers(fetchedPlayers);
-            } else {
-                setPlayers(prev => {
-                    const existing = new Set(prev.map(p => p.id));
-                    const newIds = fetchedPlayers.filter(p => !existing.has(p.id));
-                    return [...prev, ...newIds];
-                });
-            }
+    const loadPlayers = (pageNum = 1, reset = false) => {
+        if (reset) {
+            setPage(1);
+            setPlayers([]);
+            setTimeout(() => refetchPlayers(), 0);
+        } else {
             setPage(pageNum);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoadingPlayers(false);
         }
     };
 
-    const loadMatches = async () => {
-        setLoadingMatches(true);
-        try {
-            const res = await getMatches();
-            setActiveMatches(res.data.filter(m => m.status === 'open'));
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoadingMatches(false);
-        }
+    const loadMatches = () => {
+        refetchMatches();
     };
 
     const handleAction = async (targetUserId, action) => {
@@ -144,7 +140,49 @@ export default function Discover() {
 
     const applyFilters = () => {
         setShowFilters(false);
-        loadPlayers(1, true);
+    };
+
+    const filteredPlayers = players.filter(p => {
+        let match = true;
+        if (sportFilter !== 'All') {
+            match = match && (p.sports || [p.sport_type]).includes(sportFilter);
+        }
+        if (skillFilter !== 'All') {
+            match = match && p.skill_level === parseInt(skillFilter);
+        }
+        return match;
+    });
+
+    // Restore geolocation effect
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                    setLocationError(false);
+                },
+                () => {
+                    console.warn('GPS denied or failed');
+                    setLocationError(true);
+                },
+                { timeout: 10000 }
+            );
+        } else {
+            setLocationError(true);
+        }
+    }, []);
+
+    const handleManualLocationSubmit = (e) => {
+        e.preventDefault();
+        if (manualCity.trim().toLowerCase() === 'new york') {
+            setLocation({ lat: 40.7128, lon: -74.0060 });
+        } else if (manualCity.trim().toLowerCase() === 'london') {
+            setLocation({ lat: 51.5074, lon: -0.1278 });
+        } else {
+            // Default mock for other cities
+            setLocation({ lat: 22.7196, lon: 75.8577 });
+        }
+        setLocationError(false);
     };
 
     return (
@@ -158,11 +196,42 @@ export default function Discover() {
                 <button onClick={() => setActiveTab('search')} style={getTabStyle(activeTab === 'search')}><Search size={18} /> Search</button>
             </div>
 
+            {/* LOCATION FALLBACK */}
+            {activeTab === 'players' && locationError && !location && (
+                <div style={{ background: 'var(--glass)', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', marginBottom: '1rem' }}><MapPin size={20} /> Location Required</h3>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>We need your location to find players near you. Please enable GPS or enter your city manually.</p>
+                    <form onSubmit={handleManualLocationSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input 
+                            type="text" 
+                            placeholder="Enter your city (e.g. New York)" 
+                            value={manualCity}
+                            onChange={(e) => setManualCity(e.target.value)}
+                            style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(128,128,128,0.1)', color: 'var(--text-main)', outline: 'none' }}
+                        />
+                        <button type="submit" style={{ background: 'var(--primary)', color: 'black', border: 'none', padding: '0 1.5rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Set Location</button>
+                    </form>
+                </div>
+            )}
+            
+            {/* WAITING FOR LOCATION */}
+            {activeTab === 'players' && !locationError && !location && (
+                <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
+                    <MapPin size={32} className="spin" style={{ marginBottom: '1rem', color: 'var(--primary)' }} />
+                    <p>Detecting your location...</p>
+                </div>
+            )}
+
             {/* TAB: PLAYERS */}
-            {activeTab === 'players' && (
+            {activeTab === 'players' && location && (
                 <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h2 style={{ fontSize: '1.2rem' }}>Nearby Players</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <h2 style={{ fontSize: '1.2rem' }}>Nearby Players</h2>
+                            <button onClick={() => refetchPlayers()} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                <RefreshCw size={16} className={loadingPlayers ? "spin" : ""} />
+                            </button>
+                        </div>
                         <button onClick={() => setShowFilters(!showFilters)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
                             <Filter size={18} /> Filters
                         </button>
@@ -191,10 +260,10 @@ export default function Discover() {
                         </div>
                     )}
 
-                    {players.length > 0 ? (
+                    {filteredPlayers.length > 0 ? (
                         <>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
-                                {players.map(p => (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                                {filteredPlayers.map(p => (
                                     <div key={p.id} style={{ background: 'var(--glass)', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
                                         <div style={{ position: 'relative' }}>
                                             <img src={p.photos[0] || 'https://via.placeholder.com/150'} alt={p.name} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
@@ -259,26 +328,11 @@ export default function Discover() {
                 <>
                     <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Active Matches</h2>
                     {loadingMatches ? <p>Loading matches...</p> : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
                             {activeMatches.map(match => (
-                                <div key={match.id} style={{ background: 'var(--glass)', borderRadius: '16px', padding: '1.25rem', border: '1px solid var(--glass-border)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                        <h3 style={{ margin: 0 }}>{match.sport}</h3>
-                                        <span style={{ fontSize: '0.8rem', background: 'rgba(0,0,0,0.1)', padding: '2px 8px', borderRadius: '100px' }}>ID: {match.id}</span>
-                                    </div>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.25rem' }}><MapPin size={12} /> {match.location}</p>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}><Calendar size={12} /> {new Date(match.dateTime).toLocaleString()}</p>
-                                    
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <Users size={16} color="var(--primary)" />
-                                            <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{match.joinedPlayers?.length || 0} / {match.totalPlayers}</span>
-                                        </div>
-                                        <button onClick={() => handleJoinMatch(match.id)} style={{ background: 'var(--primary)', color: 'black', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Join Match</button>
-                                    </div>
-                                </div>
+                                <MatchCard key={match.id} match={match} currentUserId={currentUserId} />
                             ))}
-                            {activeMatches.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '2rem' }}>No active matches right now.</p>}
+                            {activeMatches.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '2rem', gridColumn: '1 / -1' }}>No active matches right now.</p>}
                         </div>
                     )}
                 </>

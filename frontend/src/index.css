@@ -49,8 +49,7 @@ body {
 }
 
 .app-container {
-  max-width: 480px;
-  margin: 0 auto;
+  width: 100%;
   min-height: 100vh;
   background: var(--bg-dark);
   position: relative;
@@ -93,10 +92,8 @@ body {
 .nav-bottom {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   width: 100%;
-  max-width: 480px;
   background: var(--nav-bg);
   display: flex;
   justify-content: space-around;
@@ -105,6 +102,13 @@ body {
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
   z-index: 1000;
   transition: all 0.3s ease;
+}
+
+/* Hide bottom nav on desktop */
+@media (min-width: 768px) {
+  .nav-bottom {
+    display: none;
+  }
 }
 
 .nav-item {
@@ -137,4 +141,41 @@ body {
   background: rgba(124, 58, 237, 0.1);
   color: var(--primary);
   border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.profile-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.profile-photo-container {
+  position: relative;
+  width: 100%;
+  height: 450px;
+  background: #000;
+}
+
+@media (min-width: 768px) {
+  .profile-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .profile-photo-container {
+    width: 400px;
+    height: 600px;
+    border-radius: 20px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
 }
