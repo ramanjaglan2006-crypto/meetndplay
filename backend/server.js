@@ -21,7 +21,14 @@ connectDB();
 
 // Middleware
 const corsOptions = {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: function (origin, callback) {
+        const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
+        if (!origin || origin === allowedOrigin || origin.startsWith('http://localhost') || origin.endsWith('.vercel.app')) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
 };
 app.use(cors(corsOptions));
