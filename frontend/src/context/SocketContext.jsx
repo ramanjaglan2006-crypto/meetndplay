@@ -19,7 +19,10 @@ export const SocketProvider = ({ children }) => {
             return;
         }
 
-        const newSocket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001', {
+        const isProductionDomain = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        const socketUrl = import.meta.env.VITE_SOCKET_URL || (isProductionDomain ? 'https://meetndplay.onrender.com' : 'http://localhost:5001');
+
+        const newSocket = io(socketUrl, {
             query: { userId: user.id || user._id },
             transports: ['websocket']
         });

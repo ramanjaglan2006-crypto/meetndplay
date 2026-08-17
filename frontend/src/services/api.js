@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const isProductionDomain = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (isProductionDomain ? 'https://meetndplay.onrender.com/api' : 'http://localhost:5001/api');
 
 const API = axios.create({
     baseURL: API_BASE_URL,
