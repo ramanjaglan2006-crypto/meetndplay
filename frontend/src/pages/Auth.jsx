@@ -42,7 +42,13 @@ export default function Auth() {
                 });
             }
         } catch (err) {
-            setErrorMsg(err.response?.data?.error || 'Authentication failed. Please try again.');
+            console.error('Auth error:', err);
+            const message = err.response?.data?.error || err.message;
+            if (message === 'Network Error' || !err.response) {
+                setErrorMsg('Unable to connect to backend server. Please verify VITE_API_URL environment variable on Vercel.');
+            } else {
+                setErrorMsg(message || 'Authentication failed. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
