@@ -31,6 +31,8 @@ export const AuthProvider = ({ children }) => {
         const handleUnauthorized = () => {
             setUser(null);
             setIsAuthenticated(false);
+            localStorage.removeItem('meet_token');
+            localStorage.removeItem('meet_user');
             queryClient.clear();
         };
 
@@ -40,6 +42,9 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password, lat, lon) => {
         const { data } = await loginUser(email, password, lat, lon);
+        if (data.token) {
+            localStorage.setItem('meet_token', data.token);
+        }
         setUser(data.user);
         setIsAuthenticated(true);
         return data.user;
@@ -47,6 +52,9 @@ export const AuthProvider = ({ children }) => {
 
     const signup = async (userData) => {
         const { data } = await signupUser(userData);
+        if (data.token) {
+            localStorage.setItem('meet_token', data.token);
+        }
         setUser(data.user);
         setIsAuthenticated(true);
         return data.user;
@@ -61,7 +69,6 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setIsAuthenticated(false);
             queryClient.clear();
-            // Clear any old localstorage items
             localStorage.removeItem('meet_user');
             localStorage.removeItem('meet_token');
         }

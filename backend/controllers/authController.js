@@ -19,7 +19,7 @@ const login = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-        res.json({ user: { id: user._id, name: user.name, email: user.email, profileImage: user.photos?.[0], sports: user.sports } });
+        res.json({ token, user: { id: user._id, name: user.name, email: user.email, profileImage: user.photos?.[0], sports: user.sports } });
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -52,7 +52,7 @@ const signup = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-        res.status(201).json({ user: { id: user._id, name: user.name, email: user.email, profileImage: user.photos?.[0], sports: user.sports } });
+        res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email, profileImage: user.photos?.[0], sports: user.sports } });
     } catch (err) {
         console.error('Signup error:', err);
         res.status(500).json({ error: 'Server error' });

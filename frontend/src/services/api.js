@@ -7,6 +7,18 @@ const API = axios.create({
     withCredentials: true
 });
 
+// Attach Bearer token from localStorage if present
+const attachToken = (config) => {
+    const token = localStorage.getItem('meet_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+};
+
+API.interceptors.request.use(attachToken, (error) => Promise.reject(error));
+axios.interceptors.request.use(attachToken, (error) => Promise.reject(error));
+
 // Intercept 401s globally to clear session
 API.interceptors.response.use(
     (response) => response,
@@ -21,12 +33,11 @@ API.interceptors.response.use(
 // Global axios configuration for cookies
 axios.defaults.withCredentials = true;
 
-// Optional: Add global interceptor to handle 401 Unauthorized
+// Global interceptor to handle 401 Unauthorized
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Trigger a custom event that AuthProvider can listen to
       window.dispatchEvent(new Event('unauthorized'));
     }
     return Promise.reject(error);
