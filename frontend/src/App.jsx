@@ -7,6 +7,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Lazy loaded pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const PlayPage = lazy(() => import('./pages/PlayPage'));
+const BookPage = lazy(() => import('./pages/BookPage'));
+const ConnectPage = lazy(() => import('./pages/ConnectPage'));
 const Discover = lazy(() => import('./pages/Discover'));
 const Communities = lazy(() => import('./pages/Communities'));
 const CreateCommunity = lazy(() => import('./pages/CreateCommunity'));
@@ -43,6 +46,9 @@ function AppRoutes() {
             <Suspense fallback={<div className="loading-state">Loading...</div>}>
               <Routes>
                 <Route path="/" element={<Dashboard theme={theme} toggleTheme={toggleTheme} />} />
+                <Route path="/play" element={<PlayPage />} />
+                <Route path="/book" element={<BookPage />} />
+                <Route path="/connect" element={<ConnectPage />} />
                 <Route path="/discover" element={<Discover />} />
                 <Route path="/communities" element={<Communities />} />
                 <Route path="/create-community" element={<CreateCommunity />} />
@@ -52,6 +58,7 @@ function AppRoutes() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/edit" element={<ProfileEdit />} />
                 <Route path="/profile/:id" element={<Profile />} />
+                <Route path="/athlete/:id" element={<Profile />} />
                 <Route path="/create" element={<div style={{ padding: '2rem' }}><h1>Host Match</h1><p>Feature under development...</p></div>} />
               </Routes>
             </Suspense>

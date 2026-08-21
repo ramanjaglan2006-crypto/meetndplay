@@ -1,13 +1,13 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Search, PlusCircle, Users, User, Trophy } from 'lucide-react';
+import { Home, PlayCircle, MapPin, Users, User } from 'lucide-react';
 
 const BottomNav = () => {
   const navItems = [
     { to: '/', icon: Home, label: 'Home' },
-    { to: '/discover', icon: Search, label: 'Match' },
-    { to: '/tournaments', icon: Trophy, label: 'Events' },
-    { to: '/communities', icon: Users, label: 'Social' },
+    { to: '/play', icon: PlayCircle, label: 'Play' },
+    { to: '/book', icon: MapPin, label: 'Book' },
+    { to: '/connect', icon: Users, label: 'Connect' },
     { to: '/profile', icon: User, label: 'Profile' }
   ];
 

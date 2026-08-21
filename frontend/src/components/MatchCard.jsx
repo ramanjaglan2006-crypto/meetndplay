@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, Clock, ArrowRight, Flame } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const SPORT_ICONS = {
@@ -30,22 +30,22 @@ const MatchCard = ({ match, currentUserId }) => {
     const occupancyPercent = Math.min(100, Math.round((joinedCount / totalPlayers) * 100));
 
     // Dynamic Status Calculation
-    let statusLabel = 'Open';
-    let statusColor = '#34d399';
-    let statusBg = 'rgba(16, 185, 129, 0.15)';
+    let statusLabel = 'OPEN';
+    let statusColor = '#20A66A';
+    let statusBg = '#E5F7EE';
 
     if (joinedCount >= totalPlayers) {
-        statusLabel = 'Full';
-        statusColor = '#f87171';
-        statusBg = 'rgba(239, 68, 68, 0.15)';
+        statusLabel = 'FULL';
+        statusColor = '#E65A5A';
+        statusBg = '#FDECEC';
     } else if (occupancyPercent >= 85) {
-        statusLabel = 'Almost Full';
-        statusColor = '#f43f5e';
-        statusBg = 'rgba(244, 63, 94, 0.15)';
+        statusLabel = 'ALMOST FULL';
+        statusColor = '#E65A5A';
+        statusBg = '#FDECEC';
     } else if (occupancyPercent >= 70) {
-        statusLabel = '🔥 Filling Fast';
-        statusColor = '#fbbf24';
-        statusBg = 'rgba(245, 158, 11, 0.15)';
+        statusLabel = 'FILLING FAST';
+        statusColor = '#E5A900';
+        statusBg = '#FFF3C7';
     }
 
     const sportIcon = SPORT_ICONS[match.sport] || '⚽';
@@ -60,33 +60,33 @@ const MatchCard = ({ match, currentUserId }) => {
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={handleCardClick}
             style={{
-                background: 'var(--card-bg, #1a1a1a)',
-                border: '1px solid var(--border-color, #2d2d2d)',
+                background: 'var(--card-bg, #ffffff)',
+                border: '1px solid var(--border-color, #E3E6E2)',
                 borderRadius: '16px',
                 padding: '1.25rem',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-between',
+                justify: 'space-between',
                 transition: 'transform 0.2s, boxShadow 0.2s',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.3)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
             }}
-            whileHover={{ y: -3, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+            whileHover={{ y: -3, boxShadow: '0 8px 20px rgba(0,0,0,0.06)' }}
         >
             {/* Top Row: Sport Icon & Status Badge */}
             <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '1.4rem' }}>{sportIcon}</span>
                         <div>
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 'bold', color: 'var(--text-main, #fff)' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 'bold', color: 'var(--text-main, #171817)' }}>
                                 {match.sport}
                             </h3>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #aaa)' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #626762)', fontWeight: '500' }}>
                                 {match.format || '5-a-side'}
                             </span>
                         </div>
@@ -95,47 +95,47 @@ const MatchCard = ({ match, currentUserId }) => {
                     <span style={{
                         background: statusBg,
                         color: statusColor,
-                        padding: '3px 10px',
+                        padding: '4px 10px',
                         borderRadius: '12px',
                         fontSize: '0.72rem',
                         fontWeight: '800',
-                        letterSpacing: '0.3px'
+                        letterSpacing: '0.4px'
                     }}>
                         {statusLabel}
                     </span>
                 </div>
 
                 {/* Location & Time */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.82rem', color: 'var(--text-muted, #aaa)', margin: '10px 0 14px 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <MapPin size={14} color="var(--primary, #38bdf8)" />
-                        <span style={{ color: 'var(--text-main, #eee)', fontWeight: '600' }}>{match.locationName}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '0.85rem', color: 'var(--text-muted, #626762)', margin: '12px 0 14px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-main, #171817)', fontWeight: '600' }}>
+                        <MapPin size={15} color="var(--primary-dark, #E5A900)" />
+                        <span>{match.locationName}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.78rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.8rem' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Calendar size={13} color="var(--primary, #38bdf8)" /> {dateFormatted}
+                            <Calendar size={14} color="var(--text-muted, #626762)" /> {dateFormatted}
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Clock size={13} color="var(--primary, #38bdf8)" /> {timeFormatted}
+                            <Clock size={14} color="var(--text-muted, #626762)" /> {timeFormatted}
                         </span>
                     </div>
                 </div>
 
                 {/* Visual Occupancy Progress Bar */}
-                <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '4px', fontWeight: '600' }}>
-                        <span style={{ color: 'var(--text-main, #fff)' }}>
-                            {joinedCount} / {totalPlayers} Joined
+                <div style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '5px', fontWeight: '600' }}>
+                        <span style={{ color: 'var(--text-main, #171817)' }}>
+                            {joinedCount} / {totalPlayers} joined
                         </span>
-                        <span style={{ color: slotsLeft > 0 ? 'var(--primary, #38bdf8)' : '#f87171' }}>
+                        <span style={{ color: slotsLeft > 0 ? 'var(--secondary, #20A66A)' : 'var(--danger, #E65A5A)' }}>
                             {slotsLeft > 0 ? `${slotsLeft} spots left` : 'Full'}
                         </span>
                     </div>
-                    <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '6px', background: 'var(--bg-dark, #F6F7F5)', borderRadius: '3px', overflow: 'hidden' }}>
                         <div style={{
                             width: `${occupancyPercent}%`,
                             height: '100%',
-                            background: occupancyPercent >= 85 ? '#f43f5e' : 'var(--primary, #38bdf8)',
+                            background: occupancyPercent >= 85 ? 'var(--danger, #E65A5A)' : 'var(--secondary, #20A66A)',
                             borderRadius: '3px',
                             transition: 'width 0.3s'
                         }} />
@@ -143,8 +143,8 @@ const MatchCard = ({ match, currentUserId }) => {
                 </div>
             </div>
 
-            {/* Bottom Row: Participant Avatar Stack & Action Button */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            {/* Bottom Row: Participant Avatar Stack & Action Buttons */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid var(--border-color, #E3E6E2)' }}>
                 {/* Participant Avatars */}
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     {(match.participantAvatars || []).slice(0, 3).map((url, i) => (
@@ -153,10 +153,10 @@ const MatchCard = ({ match, currentUserId }) => {
                             src={url}
                             alt="player"
                             style={{
-                                width: '26px',
-                                height: '26px',
+                                width: '28px',
+                                height: '28px',
                                 borderRadius: '50%',
-                                border: '2px solid var(--card-bg, #1a1a1a)',
+                                border: '2px solid var(--card-bg, #ffffff)',
                                 marginLeft: i === 0 ? 0 : '-8px',
                                 objectFit: 'cover'
                             }}
@@ -164,8 +164,8 @@ const MatchCard = ({ match, currentUserId }) => {
                     ))}
                     {joinedCount > 3 && (
                         <span style={{
-                            fontSize: '0.7rem',
-                            color: 'var(--text-muted, #aaa)',
+                            fontSize: '0.72rem',
+                            color: 'var(--text-muted, #626762)',
                             marginLeft: '6px',
                             fontWeight: 'bold'
                         }}>
@@ -174,27 +174,45 @@ const MatchCard = ({ match, currentUserId }) => {
                     )}
                 </div>
 
-                {/* Primary CTA */}
-                <button
-                    type="button"
-                    onClick={() => navigate(`/matches/${match._id || match.id}`)}
-                    style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        padding: '7px 16px',
-                        borderRadius: '20px',
-                        background: isJoined ? 'rgba(16, 185, 129, 0.15)' : (slotsLeft === 0 ? 'rgba(255,255,255,0.06)' : 'var(--primary, #38bdf8)'),
-                        color: isJoined ? '#34d399' : (slotsLeft === 0 ? '#aaa' : '#000'),
-                        border: 'none',
-                        fontWeight: '800',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer'
-                    }}
-                >
-                    {isJoined ? 'Enter Match' : (slotsLeft === 0 ? 'View Match' : 'Join Match')}
-                    <ArrowRight size={13} />
-                </button>
+                {/* Actions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/matches/${match._id || match.id}`)}
+                        style={{
+                            padding: '6px 12px',
+                            borderRadius: '10px',
+                            background: 'var(--bg-dark, #F6F7F5)',
+                            color: 'var(--text-main, #171817)',
+                            border: '1px solid var(--border-color, #E3E6E2)',
+                            fontWeight: 'bold',
+                            fontSize: '0.78rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        View Match
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/matches/${match._id || match.id}`)}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '6px 14px',
+                            borderRadius: '10px',
+                            background: isJoined ? 'var(--success-soft, #E5F7EE)' : (slotsLeft === 0 ? 'var(--bg-dark, #F6F7F5)' : 'var(--primary, #F5B91E)'),
+                            color: isJoined ? 'var(--success, #20A66A)' : (slotsLeft === 0 ? 'var(--text-muted, #626762)' : '#000000'),
+                            border: 'none',
+                            fontWeight: '800',
+                            fontSize: '0.78rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {isJoined ? 'Joined ✓' : (slotsLeft === 0 ? 'Full' : 'Join Match')}
+                    </button>
+                </div>
             </div>
         </motion.div>
     );

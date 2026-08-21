@@ -1,49 +1,35 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import React, { useMemo } from 'react';
 import { useMatches } from '../hooks/queries/useMatches';
 import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
 import { SEED_MATCHES } from '../config/seedMatches';
-
-import ProductNavigation from '../components/home/ProductNavigation';
-import HomeHero from '../components/home/HomeHero';
-import SportSelector from '../components/home/SportSelector';
-import QuickActions from '../components/home/QuickActions';
-import PickedForYou from '../components/home/PickedForYou';
-import ActiveMatchesFeed from '../components/home/UpcomingGames';
-import ConnectAthletes from '../components/home/ConnectAthletes';
-import BookVenues from '../components/home/BookVenues';
-import SportsCommunities from '../components/home/SportsCommunities';
 import MatchCard from '../components/MatchCard';
 
-import { MapPin, Filter, ArrowUpDown } from 'lucide-react';
+import { PlayCircle, MapPin, Users, Sparkles, ArrowRight, Calendar, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Dashboard = ({ theme, toggleTheme }) => {
+const DEMO_ATHLETES = [
+    { id: 'u2', name: 'Arjun Verma', sport: 'Football', position: 'Midfielder', level: 'Advanced', city: 'Bhopal', photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150' },
+    { id: 'u3', name: 'Ananya Sharma', sport: 'Badminton', position: 'Doubles', level: 'Intermediate', city: 'Bhopal', photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150' },
+    { id: 'u4', name: 'Vikram Singh', sport: 'Cricket', position: 'All-Rounder', level: 'Competitive', city: 'Bhopal', photo: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=150' }
+];
+
+const DEMO_COMMUNITIES = [
+    { name: 'Football Bhopal', players: '1.2K players', icon: '⚽' },
+    { name: 'Cricket Club', players: '850 players', icon: '🏏' },
+    { name: 'Shuttle Masters', players: '620 players', icon: '🏸' }
+];
+
+export default function Dashboard() {
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
-    const { socket } = useSocket();
     const { user } = useAuth();
     const currentUserId = user?.id || user?._id || 'u1';
     const currentUserName = user?.name || 'Player';
 
-    // Navigation & Scroll state
-    const [activeNavTab, setActiveNavTab] = useState('PLAY');
-    const [selectedSport, setSelectedSport] = useState('All');
-    const [sortBy, setSortBy] = useState('Soonest'); // 'Soonest', 'Closest', 'Most Players', 'Spots Remaining'
+    const { data: apiMatches = [] } = useMatches();
 
-    const activeMatchesRef = useRef(null);
-    const bookVenuesRef = useRef(null);
-    const connectAthletesRef = useRef(null);
-
-    // Fetch API Matches
-    const { data: apiMatches = [], isLoading: matchesLoading } = useMatches();
-
-    // Merge API matches with seed dataset (16 matches total)
     const allMatches = useMemo(() => {
         const merged = [...apiMatches];
         const existingIds = new Set(merged.map(m => m._id || m.id));
-
         SEED_MATCHES.forEach(seed => {
             if (!existingIds.has(seed.id)) {
                 merged.push(seed);
@@ -52,160 +38,337 @@ const Dashboard = ({ theme, toggleTheme }) => {
         return merged;
     }, [apiMatches]);
 
-    // Handle Top Product Navigation click
-    const handleTabChange = (tab) => {
-        setActiveNavTab(tab);
-        if (tab === 'PLAY') {
-            activeMatchesRef.current?.scrollIntoView({ behavior: 'smooth' });
-        } else if (tab === 'BOOK') {
-            bookVenuesRef.current?.scrollIntoView({ behavior: 'smooth' });
-        } else if (tab === 'CONNECT') {
-            connectAthletesRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
+    const upcomingUserMatches = useMemo(() => {
+        return allMatches.filter(m => (m.joinedPlayers || []).some(id => (id._id || id) === currentUserId)).slice(0, 3);
+    }, [allMatches, currentUserId]);
 
-    // Filter & Sort matches
-    const displayedMatches = useMemo(() => {
-        let list = [...allMatches];
-
-        // Sport Filter
-        if (selectedSport !== 'All') {
-            list = list.filter(m => (m.sport || '').toLowerCase() === selectedSport.toLowerCase());
-        }
-
-        // Sorting
-        if (sortBy === 'Soonest') {
-            list.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
-        } else if (sortBy === 'Closest') {
-            list.sort((a, b) => (a.distanceKm || 99) - (b.distanceKm || 99));
-        } else if (sortBy === 'Most Players') {
-            list.sort((a, b) => (b.joinedPlayers?.length || 0) - (a.joinedPlayers?.length || 0));
-        } else if (sortBy === 'Spots Remaining') {
-            list.sort((a, b) => ((a.totalPlayers - a.joinedPlayers?.length) - (b.totalPlayers - b.joinedPlayers?.length)));
-        }
-
-        return list;
-    }, [allMatches, selectedSport, sortBy]);
-
-    // Recommended matches (Picked For You)
-    const pickedMatches = useMemo(() => {
+    const recommendedMatches = useMemo(() => {
         return allMatches.filter(m => (m.joinedPlayers?.length || 0) >= Math.floor((m.totalPlayers || 10) * 0.6)).slice(0, 3);
     }, [allMatches]);
-
-    // User's joined matches
-    const upcomingUserMatches = useMemo(() => {
-        return allMatches.filter(m => (m.joinedPlayers || []).some(id => (id._id || id) === currentUserId));
-    }, [allMatches, currentUserId]);
 
     return (
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.25rem' }}>
             
-            {/* Top Product Navigation: PLAY | BOOK | CONNECT */}
-            <ProductNavigation activeTab={activeNavTab} onTabChange={handleTabChange} />
+            {/* Premium Hero Banner (No clutter, 340px height) */}
+            <div style={{
+                background: 'linear-gradient(135deg, #ffffff 0%, #FFF3C7 100%)',
+                border: '1px solid var(--border-color, #E3E6E2)',
+                borderRadius: '24px',
+                padding: '2.5rem 2rem',
+                textAlign: 'center',
+                marginBottom: '2.5rem',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    background: 'rgba(245, 185, 30, 0.2)',
+                    color: 'var(--primary-dark, #E5A900)',
+                    fontSize: '0.82rem',
+                    fontWeight: 'bold',
+                    marginBottom: '1rem'
+                }}>
+                    <Sparkles size={14} /> Welcome back, {currentUserName}!
+                </div>
 
-            {/* Homepage Hero */}
-            <HomeHero
-                onPlayNow={() => activeMatchesRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                onExploreAthletes={() => navigate('/discover')}
-            />
+                <h1 style={{
+                    fontSize: '2.6rem',
+                    fontWeight: '900',
+                    margin: '0 0 0.75rem 0',
+                    color: 'var(--text-main, #171817)',
+                    letterSpacing: '-0.5px',
+                    lineHeight: 1.15
+                }}>
+                    PLAY. BOOK. CONNECT.
+                </h1>
 
-            {/* Quick Action Buttons */}
-            <QuickActions onFindMatch={() => activeMatchesRef.current?.scrollIntoView({ behavior: 'smooth' })} />
+                <p style={{
+                    fontSize: '1.05rem',
+                    color: 'var(--text-muted, #626762)',
+                    maxWidth: '540px',
+                    margin: '0 auto 1.75rem auto',
+                    lineHeight: 1.5
+                }}>
+                    Your next game is closer than you think. Find active matches, book courts, and discover your local sports community.
+                </p>
 
-            {/* Picked For You (Recommendations) */}
-            <PickedForYou matches={pickedMatches} currentUserId={currentUserId} />
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <button
+                        onClick={() => navigate('/play')}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '12px 28px',
+                            borderRadius: '12px',
+                            background: 'var(--primary, #F5B91E)',
+                            color: '#000000',
+                            border: 'none',
+                            fontWeight: '800',
+                            fontSize: '0.95rem',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(245, 185, 30, 0.3)'
+                        }}
+                    >
+                        <PlayCircle size={18} /> PLAY NOW
+                    </button>
 
-            {/* MAIN SECTION: Active Matches Marketplace */}
-            <section ref={activeMatchesRef} style={{ marginBottom: '3rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
-                    <div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--text-main, #fff)', margin: '0 0 4px 0' }}>
-                            ACTIVE MATCHES
-                        </h2>
-                        <p style={{ fontSize: '0.88rem', color: 'var(--text-muted, #aaa)', margin: 0 }}>
-                            Games happening soon. Find your spot.
-                        </p>
+                    <button
+                        onClick={() => navigate('/connect')}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '12px 28px',
+                            borderRadius: '12px',
+                            background: '#ffffff',
+                            color: 'var(--text-main, #171817)',
+                            border: '1px solid var(--border-color, #E3E6E2)',
+                            fontWeight: '700',
+                            fontSize: '0.95rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <Users size={18} /> EXPLORE ATHLETES
+                    </button>
+                </div>
+            </div>
+
+            {/* 1. Your Upcoming Games (Max 3 cards) */}
+            {upcomingUserMatches.length > 0 && (
+                <section style={{ marginBottom: '2.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Calendar size={18} color="var(--secondary, #20A66A)" />
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-main, #171817)', margin: 0 }}>
+                                YOUR UPCOMING GAMES
+                            </h2>
+                        </div>
+                        <button
+                            onClick={() => navigate('/play')}
+                            style={{ background: 'none', border: 'none', color: 'var(--primary-dark, #E5A900)', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}
+                        >
+                            View All →
+                        </button>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        {/* Location Indicator */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted, #aaa)', background: 'var(--card-bg, #1a1a1a)', padding: '6px 14px', borderRadius: '20px', border: '1px solid var(--border-color, #2d2d2d)' }}>
-                            <MapPin size={14} color="var(--primary, #38bdf8)" /> Near You: <span style={{ color: 'var(--text-main, #fff)', fontWeight: 'bold' }}>Bhopal</span>
-                        </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                        {upcomingUserMatches.map(match => (
+                            <MatchCard key={match._id || match.id} match={match} currentUserId={currentUserId} />
+                        ))}
+                    </div>
+                </section>
+            )}
 
-                        {/* Sort Dropdown */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <ArrowUpDown size={14} color="var(--text-muted, #aaa)" />
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
+            {/* 2. Recommended Matches (Max 3 cards) */}
+            <section style={{ marginBottom: '2.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Sparkles size={18} color="var(--primary-dark, #E5A900)" />
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-main, #171817)', margin: 0 }}>
+                            RECOMMENDED MATCHES
+                        </h2>
+                    </div>
+                    <button
+                        onClick={() => navigate('/play')}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary-dark, #E5A900)', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                        View All Matches <ArrowRight size={14} />
+                    </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                    {recommendedMatches.map(match => (
+                        <MatchCard key={match._id || match.id} match={match} currentUserId={currentUserId} />
+                    ))}
+                </div>
+            </section>
+
+            {/* 3. Athletes You May Know (Max 3 cards) */}
+            <section style={{ marginBottom: '2.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Users size={18} color="var(--primary-dark, #E5A900)" />
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-main, #171817)', margin: 0 }}>
+                            ATHLETES YOU MAY KNOW
+                        </h2>
+                    </div>
+                    <button
+                        onClick={() => navigate('/connect')}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary-dark, #E5A900)', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                        Explore Athletes <ArrowRight size={14} />
+                    </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.25rem' }}>
+                    {DEMO_ATHLETES.map(a => (
+                        <div
+                            key={a.id}
+                            style={{
+                                background: 'var(--card-bg, #ffffff)',
+                                border: '1px solid var(--border-color, #E3E6E2)',
+                                borderRadius: '16px',
+                                padding: '1.25rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                textAlign: 'center',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                            }}
+                        >
+                            <img
+                                src={a.photo}
+                                alt={a.name}
+                                style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', marginBottom: '10px', border: '2.5px solid var(--primary, #F5B91E)' }}
+                            />
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-main, #171817)', margin: '0 0 2px 0' }}>{a.name}</h3>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--primary-dark, #E5A900)', fontWeight: 'bold', marginBottom: '4px' }}>
+                                {a.sport} · {a.position}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #626762)', marginBottom: '12px' }}>
+                                {a.city} • {a.level}
+                            </div>
+                            <button
+                                onClick={() => navigate(`/profile/${a.id}`)}
                                 style={{
-                                    padding: '6px 12px',
-                                    borderRadius: '20px',
-                                    background: 'var(--card-bg, #1a1a1a)',
-                                    color: 'var(--text-main, #fff)',
-                                    border: '1px solid var(--border-color, #2d2d2d)',
-                                    fontSize: '0.85rem',
+                                    width: '100%',
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    background: 'var(--bg-dark, #F6F7F5)',
+                                    color: 'var(--text-main, #171817)',
+                                    border: '1px solid var(--border-color, #E3E6E2)',
                                     fontWeight: 'bold',
+                                    fontSize: '0.78rem',
                                     cursor: 'pointer'
                                 }}
                             >
-                                <option value="Soonest">Soonest</option>
-                                <option value="Closest">Closest</option>
-                                <option value="Most Players">Most Players</option>
-                                <option value="Spots Remaining">Spots Remaining</option>
-                            </select>
+                                View Profile
+                            </button>
                         </div>
-                    </div>
+                    ))}
                 </div>
-
-                {/* Sport Selector Filter Bar */}
-                <SportSelector selectedSport={selectedSport} onSelectSport={(sport) => setSelectedSport(sport)} />
-
-                {/* 3-Column Desktop Grid for Active Matches */}
-                {displayedMatches.length === 0 ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', background: 'var(--card-bg, #1a1a1a)', borderRadius: '16px', border: '1px solid var(--border-color, #2d2d2d)' }}>
-                        <p style={{ color: 'var(--text-muted, #aaa)', margin: '0 0 1rem 0' }}>No {selectedSport} matches found nearby.</p>
-                        <button
-                            onClick={() => navigate('/create')}
-                            style={{ padding: '10px 20px', borderRadius: '10px', background: 'var(--primary, #38bdf8)', color: '#000', border: 'none', fontWeight: 'bold' }}
-                        >
-                            Host a {selectedSport} Match
-                        </button>
-                    </div>
-                ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
-                        {displayedMatches.map((match) => (
-                            <MatchCard
-                                key={match._id || match.id}
-                                match={match}
-                                currentUserId={currentUserId}
-                            />
-                        ))}
-                    </div>
-                )}
             </section>
 
-            {/* Upcoming Games Section */}
-            {upcomingUserMatches.length > 0 && (
-                <ActiveMatchesFeed matches={allMatches} currentUserId={currentUserId} onFindMatch={() => activeMatchesRef.current?.scrollIntoView({ behavior: 'smooth' })} />
-            )}
+            {/* 4. Venue Discovery Teaser */}
+            <section style={{ marginBottom: '2.5rem' }}>
+                <div style={{
+                    background: 'var(--card-bg, #ffffff)',
+                    border: '1px solid var(--border-color, #E3E6E2)',
+                    borderRadius: '20px',
+                    padding: '1.75rem',
+                    display: 'flex',
+                    justify: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
+                }}>
+                    <div>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--primary-soft, #FFF3C7)', color: 'var(--primary-dark, #E5A900)', padding: '3px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '6px' }}>
+                            <MapPin size={12} /> BOOK SPORTS VENUES — COMING SOON
+                        </div>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-main, #171817)', margin: 0 }}>
+                            Need a venue for your next match?
+                        </h3>
+                        <p style={{ fontSize: '0.88rem', color: 'var(--text-muted, #626762)', margin: '4px 0 0 0' }}>
+                            Discover top-rated turfs, badminton courts, and sports complexes near you.
+                        </p>
+                    </div>
 
-            {/* CONNECT Section: Athlete Discovery */}
-            <div ref={connectAthletesRef}>
-                <ConnectAthletes />
+                    <button
+                        onClick={() => navigate('/book')}
+                        style={{
+                            padding: '10px 20px',
+                            borderRadius: '10px',
+                            background: 'var(--primary, #F5B91E)',
+                            color: '#000000',
+                            border: 'none',
+                            fontWeight: 'bold',
+                            fontSize: '0.88rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Explore Venues →
+                    </button>
+                </div>
+            </section>
+
+            {/* 5. Popular Communities Preview */}
+            <section style={{ marginBottom: '3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-main, #171817)', margin: 0 }}>
+                        POPULAR COMMUNITIES
+                    </h2>
+                    <button
+                        onClick={() => navigate('/communities')}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary-dark, #E5A900)', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                        View Communities <ArrowRight size={14} />
+                    </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                    {DEMO_COMMUNITIES.map((c, i) => (
+                        <div
+                            key={i}
+                            onClick={() => navigate('/communities')}
+                            style={{
+                                background: 'var(--card-bg, #ffffff)',
+                                border: '1px solid var(--border-color, #E3E6E2)',
+                                borderRadius: '14px',
+                                padding: '1.1rem',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <span style={{ fontSize: '1.6rem', display: 'block', marginBottom: '6px' }}>{c.icon}</span>
+                            <h4 style={{ fontSize: '0.92rem', fontWeight: 'bold', color: 'var(--text-main, #171817)', margin: '0 0 2px 0' }}>{c.name}</h4>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--primary-dark, #E5A900)', fontWeight: 'bold' }}>{c.players}</span>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* Bottom Section: Explore Everything (PLAY | BOOK | CONNECT) */}
+            <div style={{
+                background: 'var(--bg-dark, #F6F7F5)',
+                border: '1px solid var(--border-color, #E3E6E2)',
+                borderRadius: '20px',
+                padding: '2rem',
+                textAlign: 'center'
+            }}>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-main, #171817)', marginBottom: '0.5rem' }}>
+                    Explore Everything on MeetNDPlay
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted, #626762)', marginBottom: '1.25rem' }}>
+                    Your ultimate sports social platform. Find games, book venues, and connect with athletes.
+                </p>
+
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <button
+                        onClick={() => navigate('/play')}
+                        style={{ padding: '10px 24px', borderRadius: '30px', background: 'var(--primary, #F5B91E)', color: '#000', border: 'none', fontWeight: '800', fontSize: '0.9rem', cursor: 'pointer' }}
+                    >
+                        <PlayCircle size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> PLAY
+                    </button>
+                    <button
+                        onClick={() => navigate('/book')}
+                        style={{ padding: '10px 24px', borderRadius: '30px', background: '#ffffff', color: 'var(--text-main, #171817)', border: '1px solid var(--border-color, #E3E6E2)', fontWeight: '800', fontSize: '0.9rem', cursor: 'pointer' }}
+                    >
+                        <MapPin size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> BOOK
+                    </button>
+                    <button
+                        onClick={() => navigate('/connect')}
+                        style={{ padding: '10px 24px', borderRadius: '30px', background: '#ffffff', color: 'var(--text-main, #171817)', border: '1px solid var(--border-color, #E3E6E2)', fontWeight: '800', fontSize: '0.9rem', cursor: 'pointer' }}
+                    >
+                        <Users size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> CONNECT
+                    </button>
+                </div>
             </div>
-
-            {/* BOOK Section: Venue Booking Preview */}
-            <div ref={bookVenuesRef}>
-                <BookVenues />
-            </div>
-
-            {/* Sports Communities Discovery */}
-            <SportsCommunities />
-
         </div>
     );
-};
-
-export default Dashboard;
+}

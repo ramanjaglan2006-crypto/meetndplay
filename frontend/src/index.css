@@ -1,37 +1,47 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Light Mode (Vibrant Sunshine) */
-  --primary: #fbbf24; /* Golden Yellow */
-  --primary-dark: #f59e0b;
-  --secondary: #10b981; /* Emerald */
-  --accent: #f43f5e; /* Rose */
-  --bg-dark: #fbfbfb;
-  --bg-dark-soft: #ffffff;
-  --text-main: #000000;
-  --text-muted: #4b5563;
-  --glass: #ffffff;
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --success: #10b981;
-  --warning: #f59e0b;
-  --nav-bg: #ffffff;
+  /* Warm Light Sports Theme (MeetNDPlay Gold Identity) */
+  --primary: #F5B91E; /* Gold/Yellow Accent */
+  --primary-dark: #E5A900;
+  --primary-soft: #FFF3C7;
+  --secondary: #20A66A; /* Sports Green */
+  --accent: #F5B91E;
+  --bg-dark: #F6F7F5; /* Soft Warm-Neutral Light Background */
+  --bg-dark-soft: #FFFFFF; /* Surface Card */
+  --card-bg: #FFFFFF;
+  --border-color: #E3E6E2;
+  --text-main: #171817; /* Deep Near-Black Text */
+  --text-muted: #626762;
+  --glass: #FFFFFF;
+  --glass-border: #E3E6E2;
+  --success: #20A66A;
+  --success-soft: #E5F7EE;
+  --danger: #E65A5A;
+  --danger-soft: #FDECEC;
+  --nav-bg: #FFFFFF;
 }
 
 [data-theme='dark'] {
-  /* Dark Mode (Cyber AMOLED) */
-  --primary: #c084fc; /* Bright Purple */
-  --primary-dark: #a855f7;
-  --secondary: #22d3ee; /* Electric Cyan */
-  --accent: #f472b6; /* Hot Pink */
-  --bg-dark: #000000;
-  --bg-dark-soft: #111111;
-  --text-main: #ffffff;
-  --text-muted: #94a3b8;
-  --glass: rgba(17, 17, 17, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --success: #4ade80;
-  --warning: #fbbf24;
-  --nav-bg: #0a0a0a;
+  /* Dynamic Dark Override (Soft Slate Dark) */
+  --primary: #F5B91E;
+  --primary-dark: #E5A900;
+  --primary-soft: #423508;
+  --secondary: #34d399;
+  --accent: #F5B91E;
+  --bg-dark: #121412;
+  --bg-dark-soft: #1c1e1c;
+  --card-bg: #1c1e1c;
+  --border-color: #2d302d;
+  --text-main: #f3f4f3;
+  --text-muted: #9fa49f;
+  --glass: #1c1e1c;
+  --glass-border: #2d302d;
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.15);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.15);
+  --nav-bg: #161816;
 }
 
 * {
@@ -45,7 +55,7 @@
 body {
   background-color: var(--bg-dark);
   color: var(--text-main);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .app-container {
@@ -57,36 +67,19 @@ body {
   flex-direction: column;
 }
 
-[data-theme='dark'] .app-container {
-  background: radial-gradient(circle at top right, #1e1b4b, transparent),
-              radial-gradient(circle at bottom left, #2e1065, transparent),
-              var(--bg-dark);
-}
-
-[data-theme='light'] .app-container {
-    background: radial-gradient(circle at top right, #fffbeb, transparent),
-    radial-gradient(circle at bottom left, #fef2f2, transparent),
-    var(--bg-dark);
-}
-
 .glass-card {
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
   padding: 1.25rem;
   margin-bottom: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-[data-theme='dark'] .glass-card {
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
 .glass-card:hover {
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
 }
 
 .nav-bottom {
@@ -96,15 +89,14 @@ body {
   width: 100%;
   background: var(--nav-bg);
   display: flex;
-  justify-content: space-around;
+  justify: space-around;
   padding: 0.75rem 0.5rem;
-  border-top: 1px solid var(--glass-border);
+  border-top: 1px solid var(--border-color);
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
   z-index: 1000;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-/* Hide bottom nav on desktop */
 @media (min-width: 768px) {
   .nav-bottom {
     display: none;
@@ -119,28 +111,22 @@ body {
   gap: 4px;
   font-size: 0.75rem;
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
 }
 
 .nav-item.active {
-  color: var(--primary);
-  font-weight: 600;
+  color: var(--primary-dark);
+  font-weight: 700;
 }
 
 .badge {
   padding: 4px 10px;
   border-radius: 100px;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
-}
-
-.badge-skill {
-  background: rgba(124, 58, 237, 0.1);
-  color: var(--primary);
-  border: 1px solid rgba(124, 58, 237, 0.2);
 }
 
 @keyframes spin {
@@ -163,7 +149,7 @@ body {
   position: relative;
   width: 100%;
   height: 450px;
-  background: #000;
+  background: #171817;
 }
 
 @media (min-width: 768px) {
