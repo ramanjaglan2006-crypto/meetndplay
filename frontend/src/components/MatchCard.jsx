@@ -91,17 +91,27 @@ const MatchCard = ({ match, currentUserId }) => {
       }
   };
 
+  const handleCardClick = (e) => {
+    // Prevent navigation if clicking direct action buttons
+    if (e.target.closest('button')) return;
+    navigate(`/matches/${match._id || match.id}`);
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className="glass-card"
-      style={{ marginBottom: '1rem', borderLeft: isUrgent ? '4px solid var(--secondary)' : '1px solid var(--glass-border)' }}
+      onClick={handleCardClick}
+      style={{ marginBottom: '1rem', borderLeft: isUrgent ? '4px solid var(--secondary)' : '1px solid var(--glass-border)', cursor: 'pointer' }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>{match.sport}</h3>
+            <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '10px', color: 'var(--text-main)', fontWeight: 'bold' }}>
+              {match.format || '5-a-side'}
+            </span>
             {isUrgent && (
               <span className="badge" style={{ background: 'rgba(236, 72, 153, 0.2)', color: 'var(--secondary)', fontSize: '0.6rem' }}>
                 <AlertCircle size={10} style={{ marginRight: '4px' }} /> URGENT
@@ -132,38 +142,30 @@ const MatchCard = ({ match, currentUserId }) => {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div 
-            onClick={toggleRoster}
-            style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '50px', gap: '6px', fontSize: '0.8rem' }}
+        <button
+          onClick={() => navigate(`/matches/${match._id || match.id}`)}
+          style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.08)', color: 'var(--text-main)', padding: '6px 14px', borderRadius: '50px', gap: '6px', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontWeight: 'bold' }}
         >
-          {showRoster ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          Roster
-        </div>
+          View Match Room →
+        </button>
 
         <button 
-          onClick={handleToggleJoin}
+          onClick={() => navigate(`/matches/${match._id || match.id}`)}
           className="glass-card"
-          disabled={isLoading || (!isJoined && slotsLeft <= 0)}
+          disabled={slotsLeft <= 0 && !isJoined}
           style={{ 
             padding: '8px 20px', 
-            background: isJoined ? (isLoading ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.2)') : (slotsLeft === 0 ? 'rgba(255,255,255,0.05)' : 'var(--primary)'),
+            background: isJoined ? 'rgba(16, 185, 129, 0.2)' : (slotsLeft === 0 ? 'rgba(255,255,255,0.05)' : 'var(--primary)'),
             color: isJoined ? 'var(--success)' : 'white',
             border: 'none',
             fontSize: '0.85rem',
             fontWeight: '600',
             marginBottom: 0,
-            cursor: isLoading || (!isJoined && slotsLeft <= 0) ? 'not-allowed' : 'pointer',
+            cursor: 'pointer',
             transition: 'all 0.2s ease-in-out'
           }}
         >
-          {isLoading 
-            ? 'Updating...' 
-            : isJoined 
-              ? 'Leave Match' 
-              : slotsLeft === 0 
-                ? 'Full' 
-                : 'Join Match'
-          }
+          {isJoined ? 'Enter Match Room' : slotsLeft === 0 ? 'View Full Match' : 'Join Match'}
         </button>
       </div>
 

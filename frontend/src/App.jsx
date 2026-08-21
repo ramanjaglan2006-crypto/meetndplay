@@ -14,6 +14,7 @@ const CommunityDetail = lazy(() => import('./pages/CommunityDetail'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
 const Tournaments = lazy(() => import('./pages/Tournaments'));
+const MatchRoom = lazy(() => import('./pages/MatchRoom'));
 const Auth = lazy(() => import('./pages/Auth'));
 
 function AppRoutes() {
@@ -47,6 +48,7 @@ function AppRoutes() {
                 <Route path="/create-community" element={<CreateCommunity />} />
                 <Route path="/community/:slug" element={<CommunityDetail />} />
                 <Route path="/tournaments" element={<Tournaments />} />
+                <Route path="/matches/:id" element={<MatchRoom />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/edit" element={<ProfileEdit />} />
                 <Route path="/profile/:id" element={<Profile />} />

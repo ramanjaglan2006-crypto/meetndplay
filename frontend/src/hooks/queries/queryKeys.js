@@ -25,6 +25,7 @@ export const queryKeys = {
         all: () => ['matches'],
         list: (filters) => ['matches', 'list', filters],
         detail: (matchId) => ['matches', 'detail', matchId],
+        room: (matchId) => ['matches', 'room', matchId],
         feed: () => ['matches', 'feed'], // For dashboard
     },
     // Events

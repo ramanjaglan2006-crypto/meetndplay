@@ -113,3 +113,10 @@ export const getAISynergy = (targetUserId) => API.get(`/ai/synergy/${targetUserI
 export const balanceAISquad = (data) => API.post('/ai/squad-balance', data);
 export const getAIRecommendedInvites = (matchId) => API.get(`/ai/recommended-invites/${matchId}`);
 
+// Dedicated Match Room APIs
+export const getMatchRoom = (matchId) => API.get(`/matches/${matchId}/room`);
+export const joinMatchWithPosition = (matchId, data) => API.post(`/matches/${matchId}/join`, data);
+export const updateMatchPosition = (matchId, position) => API.patch(`/matches/${matchId}/position`, { position });
+export const removeMatchParticipant = (matchId, userId) => API.delete(`/matches/${matchId}/players/${userId}`);
+
+
