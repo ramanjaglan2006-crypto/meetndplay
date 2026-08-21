@@ -107,3 +107,9 @@ export const getUserConnections = (userId) => axios.get(`${API_BASE_URL}/connect
 // Direct Messages
 export const sendDirectMessage = (senderId, receiverId, content, matchContext) => axios.post(`${API_BASE_URL}/direct_messages/send`, { senderId, receiverId, content, matchContext });
 export const getDirectMessages = (userId1, userId2) => axios.get(`${API_BASE_URL}/direct_messages/${userId1}/${userId2}`);
+
+// AI Matchmaker & Squad Builder APIs
+export const getAISynergy = (targetUserId) => API.get(`/ai/synergy/${targetUserId}`);
+export const balanceAISquad = (data) => API.post('/ai/squad-balance', data);
+export const getAIRecommendedInvites = (matchId) => API.get(`/ai/recommended-invites/${matchId}`);
+

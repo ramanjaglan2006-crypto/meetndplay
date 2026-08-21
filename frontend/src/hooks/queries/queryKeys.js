@@ -42,5 +42,11 @@ export const queryKeys = {
     // Miscellaneous Static/Slow-changing Data
     static: {
         sports: () => ['static', 'sports'],
+    },
+    // AI Matchmaker & Squad Builder
+    ai: {
+        synergy: (targetUserId) => ['ai', 'synergy', targetUserId],
+        squadBalance: (matchId) => ['ai', 'squadBalance', matchId],
+        recommendedInvites: (matchId) => ['ai', 'recommendedInvites', matchId],
     }
 };

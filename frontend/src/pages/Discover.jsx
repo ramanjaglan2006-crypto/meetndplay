@@ -6,6 +6,8 @@ import { Heart, X, MapPin, UserPlus, Search, Users, Calendar, Fingerprint, Cross
 import MatchCard from '../components/MatchCard';
 import { useAuth } from '../context/AuthContext';
 
+import AISynergyBadge from '../components/AISynergyBadge';
+
 export default function Discover() {
     const { user } = useAuth();
     const currentUserId = user?.id || 'u1';
@@ -272,8 +274,11 @@ export default function Discover() {
                                             </div>
                                         </div>
                                         <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            <div style={{ fontWeight: 'bold' }}>{p.name}, {p.age || 20}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--success)' }}>Level {p.skill_level} • {p.sports?.[0] || p.sport_type}</div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ fontWeight: 'bold' }}>{p.name}, {p.age || 20}</div>
+                                                <AISynergyBadge targetUserId={p._id || p.id} compact={true} />
+                                            </div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--success)', marginTop: '4px' }}>Level {p.skill_level} • {p.sports?.[0]?.sport || p.sports?.[0] || p.sport_type}</div>
                                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', margin: '4px 0 8px' }}>
                                                 <MapPin size={12} /> {Math.round(p.distanceKm || 0)}km away
                                             </div>
