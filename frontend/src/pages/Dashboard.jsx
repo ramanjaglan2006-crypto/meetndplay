@@ -1,147 +1,211 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getMatchRecommendations } from '../services/api';
 import { useMatches } from '../hooks/queries/useMatches';
-import MatchCard from '../components/MatchCard';
-import { Bell, Sparkles, Filter, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
+import { SEED_MATCHES } from '../config/seedMatches';
+
+import ProductNavigation from '../components/home/ProductNavigation';
+import HomeHero from '../components/home/HomeHero';
+import SportSelector from '../components/home/SportSelector';
+import QuickActions from '../components/home/QuickActions';
+import PickedForYou from '../components/home/PickedForYou';
+import ActiveMatchesFeed from '../components/home/UpcomingGames';
+import ConnectAthletes from '../components/home/ConnectAthletes';
+import BookVenues from '../components/home/BookVenues';
+import SportsCommunities from '../components/home/SportsCommunities';
+import MatchCard from '../components/MatchCard';
+
+import { MapPin, Filter, ArrowUpDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = ({ theme, toggleTheme }) => {
-  const queryClient = useQueryClient();
-  const { socket } = useSocket();
-  const [filterOpen, setFilterOpen] = useState(false);
-  const { user } = useAuth();
-  const currentUserId = user?.id || user?._id || 'u1';
-  const currentUserName = user?.name || 'Player';
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const { socket } = useSocket();
+    const { user } = useAuth();
+    const currentUserId = user?.id || user?._id || 'u1';
+    const currentUserName = user?.name || 'Player';
 
-  // React Query: Fetch All Matches via centralized hook
-  const { data: allMatches = [], isLoading: matchesLoading } = useMatches();
+    // Navigation & Scroll state
+    const [activeNavTab, setActiveNavTab] = useState('PLAY');
+    const [selectedSport, setSelectedSport] = useState('All');
+    const [sortBy, setSortBy] = useState('Soonest'); // 'Soonest', 'Closest', 'Most Players', 'Spots Remaining'
 
-  // React Query: Fetch Recommended Matches
-  // Temporarily disabled or could be a hook `useMatchRecommendations`
-  const recommendedMatches = [];
-  const recsLoading = false;
+    const activeMatchesRef = useRef(null);
+    const bookVenuesRef = useRef(null);
+    const connectAthletesRef = useRef(null);
 
-  // Real-time WebSockets logic
-  useEffect(() => {
-    if (!socket) return;
-    
-    const handleMatchUpdated = (updatedMatch) => {
-      // Live Update Player Count & Joined List globally across the app
-      queryClient.setQueryData(['matches'], (oldMatches) => {
-        if (!oldMatches) return [];
-        return oldMatches.map(m => m.id === updatedMatch.id ? updatedMatch : m);
-      });
-      
-      queryClient.setQueryData(['recommendations', currentUserId], (oldRecs) => {
-        if (!oldRecs) return [];
-        return oldRecs.map(m => m.id === updatedMatch.id ? updatedMatch : m);
-      });
+    // Fetch API Matches
+    const { data: apiMatches = [], isLoading: matchesLoading } = useMatches();
+
+    // Merge API matches with seed dataset (16 matches total)
+    const allMatches = useMemo(() => {
+        const merged = [...apiMatches];
+        const existingIds = new Set(merged.map(m => m._id || m.id));
+
+        SEED_MATCHES.forEach(seed => {
+            if (!existingIds.has(seed.id)) {
+                merged.push(seed);
+            }
+        });
+        return merged;
+    }, [apiMatches]);
+
+    // Handle Top Product Navigation click
+    const handleTabChange = (tab) => {
+        setActiveNavTab(tab);
+        if (tab === 'PLAY') {
+            activeMatchesRef.current?.scrollIntoView({ behavior: 'smooth' });
+        } else if (tab === 'BOOK') {
+            bookVenuesRef.current?.scrollIntoView({ behavior: 'smooth' });
+        } else if (tab === 'CONNECT') {
+            connectAthletesRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
     };
 
-    socket.on('match_updated', handleMatchUpdated);
+    // Filter & Sort matches
+    const displayedMatches = useMemo(() => {
+        let list = [...allMatches];
 
-    return () => {
-      socket.off('match_updated', handleMatchUpdated);
-    };
-  }, [queryClient, socket, currentUserId]);
+        // Sport Filter
+        if (selectedSport !== 'All') {
+            list = list.filter(m => (m.sport || '').toLowerCase() === selectedSport.toLowerCase());
+        }
 
-  const filteredMatches = filterOpen 
-    ? allMatches.filter(m => m.joinedPlayers.length < m.totalPlayers) 
-    : allMatches;
+        // Sorting
+        if (sortBy === 'Soonest') {
+            list.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+        } else if (sortBy === 'Closest') {
+            list.sort((a, b) => (a.distanceKm || 99) - (b.distanceKm || 99));
+        } else if (sortBy === 'Most Players') {
+            list.sort((a, b) => (b.joinedPlayers?.length || 0) - (a.joinedPlayers?.length || 0));
+        } else if (sortBy === 'Spots Remaining') {
+            list.sort((a, b) => ((a.totalPlayers - a.joinedPlayers?.length) - (b.totalPlayers - b.joinedPlayers?.length)));
+        }
 
-  return (
-    <div style={{ width: '100%' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Welcome back,</p>
-          <h1 style={{ fontSize: '1.5rem', color: 'var(--text-main)' }}>{currentUserName} <span style={{ fontSize: '1.2rem' }}>👋</span></h1>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-            <button 
-                onClick={toggleTheme}
-                className="glass-card" 
-                style={{ 
-                    padding: '10px', 
-                    borderRadius: '14px', 
-                    marginBottom: 0, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    background: 'var(--glass)',
-                    border: '1px solid var(--glass-border)'
-                }}
-            >
-                {theme === 'light' ? <Moon size={20} color="var(--text-main)" /> : <Sun size={20} color="var(--text-main)" />}
-            </button>
-            <div className="glass-card" style={{ padding: '10px', borderRadius: '14px', marginBottom: 0, display: 'flex', alignItems: 'center' }}>
-                <Bell size={20} color="var(--text-main)" />
+        return list;
+    }, [allMatches, selectedSport, sortBy]);
+
+    // Recommended matches (Picked For You)
+    const pickedMatches = useMemo(() => {
+        return allMatches.filter(m => (m.joinedPlayers?.length || 0) >= Math.floor((m.totalPlayers || 10) * 0.6)).slice(0, 3);
+    }, [allMatches]);
+
+    // User's joined matches
+    const upcomingUserMatches = useMemo(() => {
+        return allMatches.filter(m => (m.joinedPlayers || []).some(id => (id._id || id) === currentUserId));
+    }, [allMatches, currentUserId]);
+
+    return (
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.25rem' }}>
+            
+            {/* Top Product Navigation: PLAY | BOOK | CONNECT */}
+            <ProductNavigation activeTab={activeNavTab} onTabChange={handleTabChange} />
+
+            {/* Homepage Hero */}
+            <HomeHero
+                onPlayNow={() => activeMatchesRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                onExploreAthletes={() => navigate('/discover')}
+            />
+
+            {/* Quick Action Buttons */}
+            <QuickActions onFindMatch={() => activeMatchesRef.current?.scrollIntoView({ behavior: 'smooth' })} />
+
+            {/* Picked For You (Recommendations) */}
+            <PickedForYou matches={pickedMatches} currentUserId={currentUserId} />
+
+            {/* MAIN SECTION: Active Matches Marketplace */}
+            <section ref={activeMatchesRef} style={{ marginBottom: '3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <div>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--text-main, #fff)', margin: '0 0 4px 0' }}>
+                            ACTIVE MATCHES
+                        </h2>
+                        <p style={{ fontSize: '0.88rem', color: 'var(--text-muted, #aaa)', margin: 0 }}>
+                            Games happening soon. Find your spot.
+                        </p>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                        {/* Location Indicator */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted, #aaa)', background: 'var(--card-bg, #1a1a1a)', padding: '6px 14px', borderRadius: '20px', border: '1px solid var(--border-color, #2d2d2d)' }}>
+                            <MapPin size={14} color="var(--primary, #38bdf8)" /> Near You: <span style={{ color: 'var(--text-main, #fff)', fontWeight: 'bold' }}>Bhopal</span>
+                        </div>
+
+                        {/* Sort Dropdown */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <ArrowUpDown size={14} color="var(--text-muted, #aaa)" />
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                style={{
+                                    padding: '6px 12px',
+                                    borderRadius: '20px',
+                                    background: 'var(--card-bg, #1a1a1a)',
+                                    color: 'var(--text-main, #fff)',
+                                    border: '1px solid var(--border-color, #2d2d2d)',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <option value="Soonest">Soonest</option>
+                                <option value="Closest">Closest</option>
+                                <option value="Most Players">Most Players</option>
+                                <option value="Spots Remaining">Spots Remaining</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sport Selector Filter Bar */}
+                <SportSelector selectedSport={selectedSport} onSelectSport={(sport) => setSelectedSport(sport)} />
+
+                {/* 3-Column Desktop Grid for Active Matches */}
+                {displayedMatches.length === 0 ? (
+                    <div style={{ padding: '3rem', textAlign: 'center', background: 'var(--card-bg, #1a1a1a)', borderRadius: '16px', border: '1px solid var(--border-color, #2d2d2d)' }}>
+                        <p style={{ color: 'var(--text-muted, #aaa)', margin: '0 0 1rem 0' }}>No {selectedSport} matches found nearby.</p>
+                        <button
+                            onClick={() => navigate('/create')}
+                            style={{ padding: '10px 20px', borderRadius: '10px', background: 'var(--primary, #38bdf8)', color: '#000', border: 'none', fontWeight: 'bold' }}
+                        >
+                            Host a {selectedSport} Match
+                        </button>
+                    </div>
+                ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                        {displayedMatches.map((match) => (
+                            <MatchCard
+                                key={match._id || match.id}
+                                match={match}
+                                currentUserId={currentUserId}
+                            />
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            {/* Upcoming Games Section */}
+            {upcomingUserMatches.length > 0 && (
+                <ActiveMatchesFeed matches={allMatches} currentUserId={currentUserId} onFindMatch={() => activeMatchesRef.current?.scrollIntoView({ behavior: 'smooth' })} />
+            )}
+
+            {/* CONNECT Section: Athlete Discovery */}
+            <div ref={connectAthletesRef}>
+                <ConnectAthletes />
             </div>
-        </div>
-      </header>
 
-      {/* AI Recommendations */}
-      <section style={{ marginBottom: '2.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
-          <Sparkles size={18} color="var(--accent)" />
-          <h2 style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>Picked For You</h2>
-        </div>
-        
-        {recsLoading ? (
-          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>Optimizing matches...</div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-            {recommendedMatches.map(match => (
-              <MatchCard 
-                key={match._id || match.id} 
-                match={{...match, id: match._id || match.id}} 
-                currentUserId={currentUserId} 
-              />
-            ))}
-          </div>
-        )}
-      </section>
+            {/* BOOK Section: Venue Booking Preview */}
+            <div ref={bookVenuesRef}>
+                <BookVenues />
+            </div>
 
-      {/* Regular Feed */}
-      <section>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h2 style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>Active Matches</h2>
-          <button 
-            onClick={() => setFilterOpen(!filterOpen)}
-            style={{ 
-              background: filterOpen ? 'var(--primary)' : 'rgba(0,0,0,0.05)', 
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              color: filterOpen ? 'black' : 'var(--text-main)',
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <Filter size={14} /> {filterOpen ? 'Open Slots Only' : 'All Matches'}
-          </button>
+            {/* Sports Communities Discovery */}
+            <SportsCommunities />
+
         </div>
-        
-        {matchesLoading ? (
-          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading matches...</div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-            {filteredMatches.map(match => (
-              <MatchCard 
-                key={match._id || match.id} 
-                match={{...match, id: match._id || match.id}} 
-                currentUserId={currentUserId} 
-              />
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
-  );
+    );
 };
 
 export default Dashboard;

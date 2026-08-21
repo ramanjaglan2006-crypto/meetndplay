@@ -1,206 +1,203 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, Clock, AlertCircle, ChevronDown, ChevronUp, UserPlus } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowRight, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { joinMatch, leaveMatch, getMatchPlayers, inviteToMatch, getDiscoverUsers } from '../services/api';
 
-const InviteModal = ({ matchId, currentUserId, onClose }) => {
-    const [players, setPlayers] = useState([]);
-    const [selected, setSelected] = useState([]);
-
-    useEffect(() => {
-        // Fetch 12 potential invites
-        getDiscoverUsers(currentUserId, 22.7, 75.8, 1).then(res => setPlayers(res.data));
-    }, [currentUserId]);
-
-    const handleInvite = async () => {
-        await inviteToMatch(matchId, selected);
-        onClose();
-        alert("Invites sent successfully!");
-    };
-
-    return (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div style={{ background: 'var(--bg-dark)', padding: '1.5rem', borderRadius: '16px', width: '90%', maxWidth: '400px', maxHeight: '80vh', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
-                <h2 style={{ marginBottom: '1rem' }}>Invite Players</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', flex: 1, marginBottom: '1rem' }}>
-                    {players.map(p => (
-                        <div key={p.id} onClick={() => setSelected(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id])} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: selected.includes(p.id) ? 'rgba(16, 185, 129, 0.2)' : 'var(--glass)', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--glass-border)' }}>
-                            <img src={p.photos[0]} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} alt=""/>
-                            <div style={{ flex: 1, fontWeight: 'bold' }}>{p.name} <div style={{ fontWeight: 'normal', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Level {p.skill_level}</div></div>
-                            {selected.includes(p.id) && <div style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</div>}
-                        </div>
-                    ))}
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={onClose} style={{ flex: 1, padding: '10px', background: 'var(--glass)', color: 'white', border: '1px solid var(--glass-border)', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
-                    <button onClick={handleInvite} disabled={selected.length === 0} style={{ flex: 1, padding: '10px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: selected.length > 0 ? 'pointer' : 'not-allowed', opacity: selected.length > 0 ? 1 : 0.5 }}>Send Invites</button>
-                </div>
-            </div>
-        </div>
-    );
+const SPORT_ICONS = {
+    'Football': '⚽',
+    'Cricket': '🏏',
+    'Tennis': '🎾',
+    'Badminton': '🏸',
+    'Pickleball': '🥒',
+    'Basketball': '🏀',
+    'Volleyball': '🏐'
 };
 
 const MatchCard = ({ match, currentUserId }) => {
-  const navigate = useNavigate();
-  const [isJoined, setIsJoined] = useState(match.joinedPlayers.some(p => (p._id || p) === currentUserId));
-  const [joinedCount, setJoinedCount] = useState(match.joinedPlayers.length);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const [showRoster, setShowRoster] = useState(false);
-  const [roster, setRoster] = useState([]);
-  const [showInviteModal, setShowInviteModal] = useState(false);
+    const navigate = useNavigate();
 
-  const slotsLeft = match.totalPlayers - joinedCount;
-  
-  useEffect(() => {
-    setIsJoined(match.joinedPlayers.some(p => (p._id || p) === currentUserId));
-    setJoinedCount(match.joinedPlayers.length);
-  }, [match.joinedPlayers, currentUserId]);
-  
-  const matchTime = new Date(match.dateTime).getTime();
-  const now = Date.now();
-  const isUrgent = (matchTime - now) < (3 * 60 * 60 * 1000) && (matchTime - now) > 0;
+    const joinedPlayersList = match.joinedPlayers || [];
+    const [isJoined, setIsJoined] = useState(joinedPlayersList.some(p => (p._id || p) === currentUserId));
+    const [joinedCount, setJoinedCount] = useState(joinedPlayersList.length);
 
-  const handleToggleJoin = async () => {
-    if (isLoading) return;
-    if (!isJoined && slotsLeft <= 0) return;
+    useEffect(() => {
+        setIsJoined(joinedPlayersList.some(p => (p._id || p) === currentUserId));
+        setJoinedCount(joinedPlayersList.length);
+    }, [joinedPlayersList, currentUserId]);
 
-    const willJoin = !isJoined;
-    setIsJoined(willJoin);
-    setJoinedCount(prev => willJoin ? prev + 1 : prev - 1);
-    setIsLoading(true);
+    const totalPlayers = match.totalPlayers || 10;
+    const slotsLeft = Math.max(0, totalPlayers - joinedCount);
+    const occupancyPercent = Math.min(100, Math.round((joinedCount / totalPlayers) * 100));
 
-    try {
-      if (willJoin) await joinMatch(match.id, currentUserId);
-      else await leaveMatch(match.id, currentUserId);
-    } catch (err) {
-      console.error(err);
-      setIsJoined(!willJoin);
-      setJoinedCount(prev => willJoin ? prev - 1 : prev + 1);
-    } finally {
-      setIsLoading(false);
+    // Dynamic Status Calculation
+    let statusLabel = 'Open';
+    let statusColor = '#34d399';
+    let statusBg = 'rgba(16, 185, 129, 0.15)';
+
+    if (joinedCount >= totalPlayers) {
+        statusLabel = 'Full';
+        statusColor = '#f87171';
+        statusBg = 'rgba(239, 68, 68, 0.15)';
+    } else if (occupancyPercent >= 85) {
+        statusLabel = 'Almost Full';
+        statusColor = '#f43f5e';
+        statusBg = 'rgba(244, 63, 94, 0.15)';
+    } else if (occupancyPercent >= 70) {
+        statusLabel = '🔥 Filling Fast';
+        statusColor = '#fbbf24';
+        statusBg = 'rgba(245, 158, 11, 0.15)';
     }
-  };
 
-  const toggleRoster = async () => {
-      setShowRoster(!showRoster);
-      if (!showRoster) {
-          const res = await getMatchPlayers(match.id);
-          setRoster(res.data);
-      }
-  };
+    const sportIcon = SPORT_ICONS[match.sport] || '⚽';
+    const matchDate = new Date(match.dateTime || Date.now());
+    const dateFormatted = matchDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+    const timeFormatted = matchDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-  const handleCardClick = (e) => {
-    // Prevent navigation if clicking direct action buttons
-    if (e.target.closest('button')) return;
-    navigate(`/matches/${match._id || match.id}`);
-  };
+    const handleCardClick = (e) => {
+        if (e.target.closest('button')) return;
+        navigate(`/matches/${match._id || match.id}`);
+    };
 
-  return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="glass-card"
-      onClick={handleCardClick}
-      style={{ marginBottom: '1rem', borderLeft: isUrgent ? '4px solid var(--secondary)' : '1px solid var(--glass-border)', cursor: 'pointer' }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>{match.sport}</h3>
-            <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '10px', color: 'var(--text-main)', fontWeight: 'bold' }}>
-              {match.format || '5-a-side'}
-            </span>
-            {isUrgent && (
-              <span className="badge" style={{ background: 'rgba(236, 72, 153, 0.2)', color: 'var(--secondary)', fontSize: '0.6rem' }}>
-                <AlertCircle size={10} style={{ marginRight: '4px' }} /> URGENT
-              </span>
-            )}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            <MapPin size={14} /> {match.locationName || 'Local Pitch'}
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '0.9rem', color: 'var(--primary)', fontWeight: 'bold' }}>
-            {slotsLeft > 0 ? `${slotsLeft} Players Needed` : 'Match Full'}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {joinedCount}/{match.totalPlayers} Joined
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--text-main)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Calendar size={14} color="var(--primary)" /> {new Date(match.dateTime).toLocaleDateString()}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Clock size={14} color="var(--primary)" /> {new Date(match.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button
-          onClick={() => navigate(`/matches/${match._id || match.id}`)}
-          style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.08)', color: 'var(--text-main)', padding: '6px 14px', borderRadius: '50px', gap: '6px', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontWeight: 'bold' }}
+    return (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={handleCardClick}
+            style={{
+                background: 'var(--card-bg, #1a1a1a)',
+                border: '1px solid var(--border-color, #2d2d2d)',
+                borderRadius: '16px',
+                padding: '1.25rem',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'transform 0.2s, boxShadow 0.2s',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.3)'
+            }}
+            whileHover={{ y: -3, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
         >
-          View Match Room →
-        </button>
+            {/* Top Row: Sport Icon & Status Badge */}
+            <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '1.4rem' }}>{sportIcon}</span>
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 'bold', color: 'var(--text-main, #fff)' }}>
+                                {match.sport}
+                            </h3>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #aaa)' }}>
+                                {match.format || '5-a-side'}
+                            </span>
+                        </div>
+                    </div>
 
-        <button 
-          onClick={() => navigate(`/matches/${match._id || match.id}`)}
-          className="glass-card"
-          disabled={slotsLeft <= 0 && !isJoined}
-          style={{ 
-            padding: '8px 20px', 
-            background: isJoined ? 'rgba(16, 185, 129, 0.2)' : (slotsLeft === 0 ? 'rgba(255,255,255,0.05)' : 'var(--primary)'),
-            color: isJoined ? 'var(--success)' : 'white',
-            border: 'none',
-            fontSize: '0.85rem',
-            fontWeight: '600',
-            marginBottom: 0,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease-in-out'
-          }}
-        >
-          {isJoined ? 'Enter Match Room' : slotsLeft === 0 ? 'View Full Match' : 'Join Match'}
-        </button>
-      </div>
+                    <span style={{
+                        background: statusBg,
+                        color: statusColor,
+                        padding: '3px 10px',
+                        borderRadius: '12px',
+                        fontSize: '0.72rem',
+                        fontWeight: '800',
+                        letterSpacing: '0.3px'
+                    }}>
+                        {statusLabel}
+                    </span>
+                </div>
 
-      {showRoster && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <h4 style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Registered Players</h4>
-                  {isJoined && (
-                      <button onClick={() => setShowInviteModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'var(--glass)', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '50px', fontSize: '0.75rem', cursor: 'pointer' }}>
-                          <UserPlus size={14} /> Invite
-                      </button>
-                  )}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {roster.map(player => (
-                      <div 
-                          key={player._id || player.id} 
-                          onClick={() => navigate(`/profile/${player._id || player.id}`, { state: { matchContext: `Playing in: ${match.sport} match at ${match.locationName}` } })}
-                          style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                      >
-                          <img src={player.photos[0]} alt={player.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
-                          <div style={{ flex: 1, fontSize: '0.85rem', fontWeight: 'bold' }}>{player.name}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--success)' }}>Lvl {player.skill_level}</div>
-                      </div>
-                  ))}
-                  {roster.length === 0 && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Loading...</div>}
-              </div>
-          </motion.div>
-      )}
+                {/* Location & Time */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.82rem', color: 'var(--text-muted, #aaa)', margin: '10px 0 14px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <MapPin size={14} color="var(--primary, #38bdf8)" />
+                        <span style={{ color: 'var(--text-main, #eee)', fontWeight: '600' }}>{match.locationName}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.78rem' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Calendar size={13} color="var(--primary, #38bdf8)" /> {dateFormatted}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={13} color="var(--primary, #38bdf8)" /> {timeFormatted}
+                        </span>
+                    </div>
+                </div>
 
-      {showInviteModal && <InviteModal matchId={match.id} currentUserId={currentUserId} onClose={() => setShowInviteModal(false)} />}
-    </motion.div>
-  );
+                {/* Visual Occupancy Progress Bar */}
+                <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '4px', fontWeight: '600' }}>
+                        <span style={{ color: 'var(--text-main, #fff)' }}>
+                            {joinedCount} / {totalPlayers} Joined
+                        </span>
+                        <span style={{ color: slotsLeft > 0 ? 'var(--primary, #38bdf8)' : '#f87171' }}>
+                            {slotsLeft > 0 ? `${slotsLeft} spots left` : 'Full'}
+                        </span>
+                    </div>
+                    <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{
+                            width: `${occupancyPercent}%`,
+                            height: '100%',
+                            background: occupancyPercent >= 85 ? '#f43f5e' : 'var(--primary, #38bdf8)',
+                            borderRadius: '3px',
+                            transition: 'width 0.3s'
+                        }} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom Row: Participant Avatar Stack & Action Button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                {/* Participant Avatars */}
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {(match.participantAvatars || []).slice(0, 3).map((url, i) => (
+                        <img
+                            key={i}
+                            src={url}
+                            alt="player"
+                            style={{
+                                width: '26px',
+                                height: '26px',
+                                borderRadius: '50%',
+                                border: '2px solid var(--card-bg, #1a1a1a)',
+                                marginLeft: i === 0 ? 0 : '-8px',
+                                objectFit: 'cover'
+                            }}
+                        />
+                    ))}
+                    {joinedCount > 3 && (
+                        <span style={{
+                            fontSize: '0.7rem',
+                            color: 'var(--text-muted, #aaa)',
+                            marginLeft: '6px',
+                            fontWeight: 'bold'
+                        }}>
+                            +{joinedCount - 3}
+                        </span>
+                    )}
+                </div>
+
+                {/* Primary CTA */}
+                <button
+                    type="button"
+                    onClick={() => navigate(`/matches/${match._id || match.id}`)}
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '7px 16px',
+                        borderRadius: '20px',
+                        background: isJoined ? 'rgba(16, 185, 129, 0.15)' : (slotsLeft === 0 ? 'rgba(255,255,255,0.06)' : 'var(--primary, #38bdf8)'),
+                        color: isJoined ? '#34d399' : (slotsLeft === 0 ? '#aaa' : '#000'),
+                        border: 'none',
+                        fontWeight: '800',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer'
+                    }}
+                >
+                    {isJoined ? 'Enter Match' : (slotsLeft === 0 ? 'View Match' : 'Join Match')}
+                    <ArrowRight size={13} />
+                </button>
+            </div>
+        </motion.div>
+    );
 };
 
 export default MatchCard;
