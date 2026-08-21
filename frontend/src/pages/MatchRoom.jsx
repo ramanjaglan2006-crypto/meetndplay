@@ -9,9 +9,8 @@ import FootballPitch from '../components/FootballPitch';
 import JoinMatchModal from '../components/JoinMatchModal';
 import PlayerPreviewModal from '../components/PlayerPreviewModal';
 import OrganizerControls from '../components/OrganizerControls';
-import AISquadBuilder from '../components/AISquadBuilder';
 
-import { Shield, Zap, Info, FileText, User } from 'lucide-react';
+import { Shield, Zap, Info, FileText } from 'lucide-react';
 
 export default function MatchRoom() {
     const { id: matchId } = useParams();
@@ -84,7 +83,7 @@ export default function MatchRoom() {
     };
 
     return (
-        <div style={{ maxWidth: '1180px', margin: '0 auto', padding: '1.25rem' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.25rem' }}>
             
             {/* Header Navigation & Status Bar */}
             <MatchHeader
@@ -96,18 +95,18 @@ export default function MatchRoom() {
                 onLeave={handleLeave}
             />
 
-            {/* ABOVE THE FOLD — 2-Column Hero Layout */}
+            {/* ABOVE THE FOLD — 2-Column Hero Layout (72% Pitch Left / 28% Sidebar Right) */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1.55fr) minmax(0, 1fr)',
+                gridTemplateColumns: 'minmax(0, 2.4fr) minmax(0, 1fr)',
                 gap: '1.5rem',
                 alignItems: 'start'
             }} className="match-room-hero-grid">
                 
-                {/* LEFT HERO: Football Pitch (60-65%) */}
+                {/* LEFT HERO: Large Football Pitch (70-75% Width) */}
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-main, #fff)', letterSpacing: '0.5px' }}>
+                        <span style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-main, #fff)', letterSpacing: '0.5px' }}>
                             TACTICAL LINEUP
                         </span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #aaa)' }}>
@@ -123,7 +122,7 @@ export default function MatchRoom() {
                     />
                 </div>
 
-                {/* RIGHT SIDEBAR: Match Summary & Teams (35-40%) */}
+                {/* RIGHT SIDEBAR: Match Summary & Teams (25-30% Width) */}
                 <div>
                     <MatchSummarySidebar
                         match={match}
@@ -137,7 +136,7 @@ export default function MatchRoom() {
                 </div>
             </div>
 
-            {/* BELOW THE FOLD — Detailed Information & Secondary Tools */}
+            {/* BELOW THE FOLD — Detailed Information & Full Roster */}
             <div style={{ marginTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                 
                 {/* Organizer Management Panel (If Host) */}
@@ -244,11 +243,6 @@ export default function MatchRoom() {
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Secondary Tool: AI Squad Auto-Balancer */}
-                <div>
-                    <AISquadBuilder matchId={matchId} playerIds={participants.map(p => p.user?._id || p.user?.id)} sport={match.sport} />
                 </div>
             </div>
 

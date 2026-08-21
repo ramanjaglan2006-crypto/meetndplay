@@ -19,7 +19,7 @@ const MatchSummarySidebar = ({
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             
-            {/* Unified Match Summary Container */}
+            {/* Unified Compact Match Summary Box */}
             <div style={{
                 background: 'var(--card-bg, #1a1a1a)',
                 border: '1px solid var(--border-color, #2d2d2d)',
@@ -27,7 +27,7 @@ const MatchSummarySidebar = ({
                 padding: '1.25rem'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color, #2d2d2d)' }}>
-                    <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-main, #fff)', letterSpacing: '0.5px' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-main, #fff)', letterSpacing: '0.5px' }}>
                         MATCH SUMMARY
                     </span>
                     <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--primary, #38bdf8)' }}>
@@ -64,7 +64,7 @@ const MatchSummarySidebar = ({
                                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8' }} />
                                     <span style={{ color: 'var(--text-main, #fff)', fontWeight: '600' }}>{p.user?.name?.split(' ')[0]}</span>
                                 </div>
-                                <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 'bold' }}>
+                                <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 'bold' }}>
                                     {p.position}
                                 </span>
                             </div>
@@ -106,7 +106,7 @@ const MatchSummarySidebar = ({
                                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f43f5e' }} />
                                     <span style={{ color: 'var(--text-main, #fff)', fontWeight: '600' }}>{p.user?.name?.split(' ')[0]}</span>
                                 </div>
-                                <span style={{ fontSize: '0.7rem', color: '#f43f5e', fontWeight: 'bold' }}>
+                                <span style={{ fontSize: '0.72rem', color: '#f43f5e', fontWeight: 'bold' }}>
                                     {p.position}
                                 </span>
                             </div>
@@ -119,7 +119,7 @@ const MatchSummarySidebar = ({
                     </div>
                 </div>
 
-                {/* Host Section */}
+                {/* Host Summary Section */}
                 <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-color, #2d2d2d)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <img
@@ -150,7 +150,7 @@ const MatchSummarySidebar = ({
                 </div>
             </div>
 
-            {/* Quick Join Card if not joined */}
+            {/* CTA Button if not joined */}
             {!isJoined && capacity.remaining > 0 && (
                 <button
                     onClick={onOpenJoin}
