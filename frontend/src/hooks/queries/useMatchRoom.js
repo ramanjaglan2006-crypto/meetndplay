@@ -1,11 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMatchRoom, joinMatchWithPosition, leaveMatch, updateMatchPosition, removeMatchParticipant } from '../../services/api';
 import { queryKeys } from './queryKeys';
+import { getSeedMatchRoomData } from '../../config/seedMatches';
 
 export const useMatchRoom = (matchId, options = {}) => {
     return useQuery({
         queryKey: queryKeys.matches.room(matchId),
-        queryFn: () => getMatchRoom(matchId).then(res => res.data),
+        queryFn: async () => {
+            if (matchId && matchId.startsWith('seed-')) {
+                return getSeedMatchRoomData(matchId);
+            }
+            try {
+                const res = await getMatchRoom(matchId);
+                return res.data;
+            } catch (err) {
+                const fallback = getSeedMatchRoomData(matchId);
+                if (fallback) return fallback;
+                throw err;
+            }
+        },
         staleTime: 1000 * 10, // 10 seconds for match room freshness
         enabled: !!matchId && (options.enabled !== false),
     });
