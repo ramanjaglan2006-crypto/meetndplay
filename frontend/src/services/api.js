@@ -84,13 +84,13 @@ export const deleteCommunityChatMessage = (communityId, messageId) => API.delete
 export const getChannels = (communityId) => axios.get(`${API_BASE_URL}/channels/${communityId}`);
 export const getMessages = (channelId) => axios.get(`${API_BASE_URL}/messages/${channelId}`);
 
-export const getMatches = () => axios.get(`${API_BASE_URL}/matches`);
+export const getMatches = () => API.get('/matches');
 export const getMyMatches = () => API.get('/matches/my');
-export const createMatch = (matchData) => axios.post(`${API_BASE_URL}/matches`, matchData);
-export const joinMatch = (matchId, userId) => axios.post(`${API_BASE_URL}/matches/${matchId}/join`, { userId });
-export const leaveMatch = (matchId, userId) => axios.post(`${API_BASE_URL}/matches/${matchId}/leave`, { userId });
-export const getMatchPlayers = (matchId) => axios.get(`${API_BASE_URL}/matches/${matchId}/players`);
-export const inviteToMatch = (matchId, targetUserIds) => axios.post(`${API_BASE_URL}/matches/${matchId}/invite`, { targetUserIds });
+export const createMatch = (matchData) => API.post('/matches', matchData);
+export const joinMatch = (matchId, userId) => API.post(`/matches/${matchId}/join`, { userId });
+export const leaveMatch = (matchId, userId) => API.post(`/matches/${matchId}/leave`, { userId });
+export const getMatchPlayers = (matchId) => API.get(`/matches/${matchId}/players`);
+export const inviteToMatch = (matchId, targetUserIds) => API.post(`/matches/${matchId}/invite`, { targetUserIds });
 
 export const getTournaments = () => axios.get(`${API_BASE_URL}/tournaments`);
 export const registerTournament = (tournamentId, teamName) => axios.post(`${API_BASE_URL}/tournaments/register`, { tournamentId, teamName });

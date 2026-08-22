@@ -11,8 +11,8 @@ const createMatch = async (req, res) => {
             time,
             durationMinutes = 60,
             locationName = 'Local Pitch',
-            lat = 0,
-            lon = 0,
+            lat,
+            lon,
             maxPlayers = 10,
             totalPlayers,
             playersPerTeam,
@@ -36,21 +36,35 @@ const createMatch = async (req, res) => {
             matchDate = new Date(date);
         }
 
+        // Safe coordinates parsing (default to Bhopal coordinates 77.4126, 23.2599 if NaN or uncaptured)
+        let parsedLat = parseFloat(lat);
+        let parsedLon = parseFloat(lon);
+        if (isNaN(parsedLat) || isNaN(parsedLon)) {
+            parsedLat = 23.2599;
+            parsedLon = 77.4126;
+        }
+
+        // Ensure req.userId exists
+        const hostId = req.userId || req.user?._id || req.user?.id;
+        if (!hostId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
         const match = new Match({
             title: title || `${format} ${sport} Match`,
             sport,
             format,
             playersPerTeam: calculatedPerTeam,
-            hostId: req.userId,
-            joinedPlayers: [req.userId],
+            hostId,
+            joinedPlayers: [hostId],
             totalPlayers: calculatedTotal,
             skillLevel: parseInt(skillLevel) || 3,
             dateTime: matchDate,
             durationMinutes: parseInt(durationMinutes) || 60,
-            locationName,
+            locationName: locationName || 'Bhopal Turf',
             location: {
                 type: 'Point',
-                coordinates: [parseFloat(lon || 0), parseFloat(lat || 0)]
+                coordinates: [parsedLon, parsedLat]
             },
             description,
             rules,
@@ -65,7 +79,7 @@ const createMatch = async (req, res) => {
         const hostPosition = sport.toLowerCase().includes('football') ? 'Striker' : (sport.toLowerCase().includes('cricket') ? 'Batsman' : 'Player');
         const hostParticipation = new MatchParticipation({
             matchId: match._id,
-            userId: req.userId,
+            userId: hostId,
             team: 'A',
             position: hostPosition,
             status: 'confirmed'
@@ -76,7 +90,7 @@ const createMatch = async (req, res) => {
             const sysMessage = new Message({
                 community,
                 type: 'system',
-                sender: req.userId,
+                sender: hostId,
                 text: 'created a match',
                 systemData: {
                     action: 'match_created',
@@ -93,7 +107,7 @@ const createMatch = async (req, res) => {
         res.status(201).json(match);
     } catch (err) {
         console.error('Error creating match:', err);
-        res.status(500).json({ error: 'Server error creating match' });
+        res.status(500).json({ error: 'Server error creating match: ' + err.message });
     }
 };
 
@@ -134,7 +148,6 @@ const getMyMatches = async (req, res) => {
         participations.forEach(p => {
             if (p.matchId) {
                 const matchObj = p.matchId.toObject ? p.matchId.toObject() : p.matchId;
-                // Exclude matches created by self if already in createdMatches
                 if (matchObj.hostId?._id?.toString() !== userId.toString() && matchObj.hostId?.toString() !== userId.toString()) {
                     joinedMatches.push({
                         ...matchObj,
