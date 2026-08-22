@@ -55,6 +55,7 @@ function AppRoutes() {
                 <Route path="/community/:slug" element={<CommunityDetail />} />
                 <Route path="/tournaments" element={<Tournaments />} />
                 <Route path="/matches/:id" element={<MatchRoom />} />
+                <Route path="/match/:id" element={<MatchRoom />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/edit" element={<ProfileEdit />} />
                 <Route path="/profile/:id" element={<Profile />} />

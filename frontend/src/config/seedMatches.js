@@ -254,9 +254,26 @@ export const SEED_MATCHES = [
   }
 ];
 
-// Helper function to return populated Match Room details for ANY seed match
-export const getSeedMatchRoomData = (matchId) => {
-  const seedMatch = SEED_MATCHES.find(m => m.id === matchId || m._id === matchId) || SEED_MATCHES[0];
+// Robust Match Room Generator for ANY match ID
+export const getSeedMatchRoomData = (matchId = '') => {
+  const mid = String(matchId).toLowerCase();
+
+  // Try exact match by id or _id
+  let seedMatch = SEED_MATCHES.find(m => m.id === matchId || m._id === matchId);
+
+  // If not found, fuzzy match by sport keyword in matchId
+  if (!seedMatch) {
+    if (mid.includes('cr') || mid.includes('cricket')) seedMatch = SEED_MATCHES.find(m => m.sport === 'Cricket');
+    else if (mid.includes('bm') || mid.includes('badminton')) seedMatch = SEED_MATCHES.find(m => m.sport === 'Badminton');
+    else if (mid.includes('tn') || mid.includes('tennis')) seedMatch = SEED_MATCHES.find(m => m.sport === 'Tennis');
+    else if (mid.includes('pb') || mid.includes('pickle')) seedMatch = SEED_MATCHES.find(m => m.sport === 'Pickleball');
+    else if (mid.includes('bk') || mid.includes('basket')) seedMatch = SEED_MATCHES.find(m => m.sport === 'Basketball');
+    else if (mid.includes('vb') || mid.includes('volley')) seedMatch = SEED_MATCHES.find(m => m.sport === 'Volleyball');
+    else if (mid.includes('fb') || mid.includes('foot')) seedMatch = SEED_MATCHES.find(m => m.sport === 'Football');
+  }
+
+  // Fallback to first seed match if still not found
+  if (!seedMatch) seedMatch = SEED_MATCHES[0];
 
   const demoUsers = [
     { _id: 'u1', id: 'u1', name: 'Raman Kumar', skill_level: 4, photos: ['https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150'] },
@@ -273,7 +290,6 @@ export const getSeedMatchRoomData = (matchId) => {
 
   const sportName = seedMatch.sport.toLowerCase();
   
-  // Position mapping based on sport
   let posListA = ['Goalkeeper', 'Defender', 'Defender', 'Midfielder', 'Striker'];
   let posListB = ['Goalkeeper', 'Defender', 'Defender', 'Midfielder', 'Striker'];
 
@@ -309,8 +325,8 @@ export const getSeedMatchRoomData = (matchId) => {
 
   return {
     match: {
-      id: seedMatch.id,
-      _id: seedMatch.id,
+      id: matchId || seedMatch.id,
+      _id: matchId || seedMatch.id,
       sport: seedMatch.sport,
       format: seedMatch.format || 'Standard',
       title: seedMatch.title,
@@ -322,7 +338,7 @@ export const getSeedMatchRoomData = (matchId) => {
       playersPerTeam: Math.ceil((seedMatch.totalPlayers || 10) / 2),
       totalPlayers: seedMatch.totalPlayers || 10
     },
-    organizer: demoUsers[1], // Arjun Verma
+    organizer: demoUsers[1],
     participants,
     capacity: {
       joined: participants.length,
