@@ -42,36 +42,36 @@ const PlayerNodeImage = ({ user, isTeamA }) => {
     );
 };
 
-// Calculate realistic vertical top-down cricket ground coordinates for Team A (TOP) and Team B (BOTTOM)
+// Calculate coordinates: Team A on LEFT side, Team B on RIGHT side.
+// Vertical role tiering for BOTH teams: Top = Batsmen, Middle = All-Rounders, Bottom = Bowlers.
 const getCricketCoordinates = (roleStr = '', team = 'A', roleIndex = 0) => {
     const isTeamA = team === 'A';
     const role = roleStr.toLowerCase();
 
     if (role.includes('keeper') || role.includes('wk')) {
-        // Wicketkeeper: Directly behind their team's wicket
-        return isTeamA ? { x: 50, y: 12 } : { x: 50, y: 88 };
+        return isTeamA ? { x: 36, y: 14 } : { x: 64, y: 14 };
     }
 
     if (role.includes('bat')) {
-        // Batsmen: Natural placement near the team's crease
-        const batOffsetsA = [{ x: 38, y: 22 }, { x: 62, y: 22 }, { x: 50, y: 26 }];
-        const batOffsetsB = [{ x: 38, y: 78 }, { x: 62, y: 78 }, { x: 50, y: 74 }];
-        const list = isTeamA ? batOffsetsA : batOffsetsB;
+        // TOP ZONE — BATSMEN
+        const batA = [{ x: 18, y: 20 }, { x: 34, y: 26 }, { x: 16, y: 32 }];
+        const batB = [{ x: 82, y: 20 }, { x: 66, y: 26 }, { x: 84, y: 32 }];
+        const list = isTeamA ? batA : batB;
         return list[roleIndex % list.length];
     }
 
     if (role.includes('all') || role.includes('round')) {
-        // All-rounders: Central / Middle region of the continuous field
-        const allOffsetsA = [{ x: 26, y: 46 }, { x: 74, y: 46 }, { x: 32, y: 42 }];
-        const allOffsetsB = [{ x: 26, y: 54 }, { x: 74, y: 54 }, { x: 68, y: 58 }];
-        const list = isTeamA ? allOffsetsA : allOffsetsB;
+        // MIDDLE ZONE — ALL-ROUNDERS
+        const allA = [{ x: 20, y: 48 }, { x: 34, y: 56 }];
+        const allB = [{ x: 80, y: 48 }, { x: 66, y: 56 }];
+        const list = isTeamA ? allA : allB;
         return list[roleIndex % list.length];
     }
 
-    // Default: Bowlers (Distributed naturally around fielding area)
-    const bowlOffsetsA = [{ x: 22, y: 34 }, { x: 78, y: 34 }, { x: 32, y: 38 }, { x: 68, y: 38 }];
-    const bowlOffsetsB = [{ x: 22, y: 66 }, { x: 78, y: 66 }, { x: 32, y: 62 }, { x: 68, y: 62 }];
-    const list = isTeamA ? bowlOffsetsA : bowlOffsetsB;
+    // BOTTOM ZONE — BOWLERS
+    const bowlA = [{ x: 18, y: 74 }, { x: 34, y: 82 }];
+    const bowlB = [{ x: 82, y: 74 }, { x: 66, y: 82 }];
+    const list = isTeamA ? bowlA : bowlB;
     return list[roleIndex % list.length];
 };
 
@@ -87,8 +87,8 @@ const CricketField = ({
     const teamAParticipants = participants.filter(p => p.team === 'A');
     const teamBParticipants = participants.filter(p => p.team === 'B');
 
-    // Default 12 Cricket slots (6 Team A, 6 Team B)
     const DEFAULT_SLOTS = [
+        // TEAM A (LEFT SIDE)
         { id: 'a-bat-1', team: 'A', role: 'Batsman', roleIndex: 0 },
         { id: 'a-bat-2', team: 'A', role: 'Batsman', roleIndex: 1 },
         { id: 'a-wk-1', team: 'A', role: 'Wicketkeeper', roleIndex: 0 },
@@ -96,6 +96,7 @@ const CricketField = ({
         { id: 'a-bowl-1', team: 'A', role: 'Bowler', roleIndex: 0 },
         { id: 'a-bowl-2', team: 'A', role: 'Bowler', roleIndex: 1 },
 
+        // TEAM B (RIGHT SIDE)
         { id: 'b-bat-1', team: 'B', role: 'Batsman', roleIndex: 0 },
         { id: 'b-bat-2', team: 'B', role: 'Batsman', roleIndex: 1 },
         { id: 'b-wk-1', team: 'B', role: 'Wicketkeeper', roleIndex: 0 },
@@ -133,7 +134,7 @@ const CricketField = ({
         <div style={{
             position: 'relative',
             width: '100%',
-            aspectRatio: '0.9 / 1', // Vertical Top-Down Cricket Ground
+            aspectRatio: '1.35 / 1', // Wider ground as requested!
             background: 'radial-gradient(ellipse at center, #15803d 0%, #166534 60%, #14532d 100%)',
             borderRadius: '24px',
             border: '2px solid rgba(255,255,255,0.3)',
@@ -149,7 +150,7 @@ const CricketField = ({
                 pointerEvents: 'none'
             }} />
 
-            {/* Boundary Rope (Dashed White Oval) */}
+            {/* Boundary Line */}
             <div style={{
                 position: 'absolute',
                 inset: '16px',
@@ -158,57 +159,94 @@ const CricketField = ({
                 pointerEvents: 'none'
             }} />
 
-            {/* 30-Yard Circle (Inner Fielding Ellipse) */}
+            {/* 30-Yard Inner Circle */}
             <div style={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
                 width: '68%',
-                height: '62%',
+                height: '70%',
                 border: '1.5px solid rgba(255,255,255,0.35)',
                 borderRadius: '50%',
                 transform: 'translate(-50%, -50%)',
                 pointerEvents: 'none'
             }} />
 
-            {/* Central 22-Yard Vertical Pitch Strip */}
+            {/* Central Vertical 22-Yard Pitch Strip */}
             <div style={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                width: '68px',
-                height: '52%',
+                width: '54px',
+                height: '65%',
                 background: 'linear-gradient(180deg, #c2410c 0%, #d97706 50%, #c2410c 100%)',
-                border: '2px solid rgba(255,255,255,0.8)',
+                border: '2px solid rgba(255,255,255,0.85)',
                 borderRadius: '4px',
                 transform: 'translate(-50%, -50%)',
                 pointerEvents: 'none',
                 boxShadow: '0 0 16px rgba(0,0,0,0.4)',
                 zIndex: 2
             }}>
-                {/* Top Wicket & Popping Crease */}
-                <div style={{ position: 'absolute', top: '12%', left: '10%', right: '10%', height: '2px', background: '#fff' }} />
-                <div style={{ position: 'absolute', top: '8%', left: '50%', transform: 'translateX(-50%)', width: '26px', height: '4px', background: '#fef08a', border: '1px solid #78350f', borderRadius: '1px' }} />
+                {/* Top Wicket & Crease */}
+                <div style={{ position: 'absolute', top: '10%', left: '10%', right: '10%', height: '2px', background: '#fff' }} />
+                <div style={{ position: 'absolute', top: '6%', left: '50%', transform: 'translateX(-50%)', width: '24px', height: '4px', background: '#fef08a', border: '1px solid #78350f', borderRadius: '1px' }} />
 
-                {/* Bottom Wicket & Popping Crease */}
-                <div style={{ position: 'absolute', bottom: '12%', left: '10%', right: '10%', height: '2px', background: '#fff' }} />
-                <div style={{ position: 'absolute', bottom: '8%', left: '50%', transform: 'translateX(-50%)', width: '26px', height: '4px', background: '#fef08a', border: '1px solid #78350f', borderRadius: '1px' }} />
+                {/* Bottom Wicket & Crease */}
+                <div style={{ position: 'absolute', bottom: '10%', left: '10%', right: '10%', height: '2px', background: '#fff' }} />
+                <div style={{ position: 'absolute', bottom: '6%', left: '50%', transform: 'translateX(-50%)', width: '24px', height: '4px', background: '#fef08a', border: '1px solid #78350f', borderRadius: '1px' }} />
 
-                {/* Pitch Label */}
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff', fontSize: '0.62rem', fontWeight: '900', letterSpacing: '1px', textTransform: 'uppercase', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
                     22 YARDS
                 </div>
             </div>
 
-            {/* Subtle Team End Identifiers */}
-            <div style={{ position: 'absolute', top: '24px', left: '24px', background: 'rgba(56, 189, 248, 0.25)', border: '1px solid #38bdf8', color: '#38bdf8', padding: '2px 10px', borderRadius: '10px', fontWeight: '900', fontSize: '0.75rem', letterSpacing: '1px' }}>
-                TEAM A (TOP END)
-            </div>
-            <div style={{ position: 'absolute', bottom: '24px', right: '24px', background: 'rgba(244, 63, 94, 0.25)', border: '1px solid #f43f5e', color: '#f43f5e', padding: '2px 10px', borderRadius: '10px', fontWeight: '900', fontSize: '0.75rem', letterSpacing: '1px' }}>
-                TEAM B (BOTTOM END)
+            {/* Prominent Team Identifiers: TEAM A (Left Side) & TEAM B (Right Side) */}
+            <div style={{
+                position: 'absolute',
+                top: '20px',
+                left: '24px',
+                background: '#0284c7',
+                color: '#ffffff',
+                padding: '4px 14px',
+                borderRadius: '12px',
+                fontWeight: '900',
+                fontSize: '0.85rem',
+                letterSpacing: '1px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                zIndex: 15
+            }}>
+                🛡 TEAM A (LEFT SIDE)
             </div>
 
-            {/* Render Cricket Player Nodes according to role and team placement */}
+            <div style={{
+                position: 'absolute',
+                top: '20px',
+                right: '24px',
+                background: '#e11d48',
+                color: '#ffffff',
+                padding: '4px 14px',
+                borderRadius: '12px',
+                fontWeight: '900',
+                fontSize: '0.85rem',
+                letterSpacing: '1px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                zIndex: 15
+            }}>
+                ⚡ TEAM B (RIGHT SIDE)
+            </div>
+
+            {/* Role Zone Indicators on Left & Right */}
+            <div style={{ position: 'absolute', top: '28px', left: '160px', color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', fontWeight: '900', letterSpacing: '1px' }}>
+                TOP: BATSMEN
+            </div>
+            <div style={{ position: 'absolute', top: '50%', left: '24px', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', fontWeight: '900', letterSpacing: '1px' }}>
+                MID: ALL-ROUNDERS
+            </div>
+            <div style={{ position: 'absolute', bottom: '24px', left: '24px', color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', fontWeight: '900', letterSpacing: '1px' }}>
+                BOTTOM: BOWLERS
+            </div>
+
+            {/* Render Cricket Player Nodes */}
             {DEFAULT_SLOTS.map((slotConfig) => {
                 const participant = getSlotParticipant(slotConfig);
                 const isTeamA = slotConfig.team === 'A';
@@ -245,10 +283,10 @@ const CricketField = ({
                                     background: 'rgba(15, 23, 42, 0.95)',
                                     padding: '2px 8px',
                                     borderRadius: '12px',
-                                    border: `1px solid ${isTeamA ? 'rgba(56, 189, 248, 0.4)' : 'rgba(244, 63, 94, 0.4)'}`,
+                                    border: `1.5px solid ${isTeamA ? '#38bdf8' : '#f43f5e'}`,
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '5px',
+                                    gap: '4px',
                                     boxShadow: '0 4px 10px rgba(0,0,0,0.6)',
                                     whiteSpace: 'nowrap'
                                 }}>
@@ -270,14 +308,14 @@ const CricketField = ({
                                     width: '44px',
                                     height: '44px',
                                     borderRadius: '50%',
-                                    border: '2px dashed rgba(255,255,255,0.6)',
+                                    border: `2px dashed ${isTeamA ? 'rgba(56, 189, 248, 0.7)' : 'rgba(244, 63, 94, 0.7)'}`,
                                     background: 'rgba(0,0,0,0.35)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     color: '#fff'
                                 }}>
-                                    <Plus size={18} />
+                                    <Plus size={18} color={isTeamA ? '#38bdf8' : '#f43f5e'} />
                                 </div>
                                 <div style={{ marginTop: '3px', background: 'rgba(0,0,0,0.65)', color: 'rgba(255,255,255,0.9)', padding: '1px 6px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '700' }}>
                                     {getRoleAbbr(slotConfig.role)}
