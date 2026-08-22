@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MATCH_FORMATS, POSITION_ABBREVIATIONS } from '../config/matchFormats';
+import { SPORT_CONFIGS } from '../../config/matchFormats';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -43,8 +43,7 @@ const PlayerNodeImage = ({ user, isTeamA }) => {
     );
 };
 
-const FootballPitch = ({
-    format = '5-a-side',
+const TennisCourt = ({
     participants = [],
     onSelectPlayer,
     onSelectEmptySlot
@@ -53,27 +52,16 @@ const FootballPitch = ({
     const [hoveredParticipant, setHoveredParticipant] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-    const formatConfig = MATCH_FORMATS[format] || MATCH_FORMATS['5-a-side'];
-    const slots = formatConfig.slots;
+    const config = SPORT_CONFIGS.tennis;
+    const slots = config.slots;
 
     const teamAParticipants = participants.filter(p => p.team === 'A');
     const teamBParticipants = participants.filter(p => p.team === 'B');
 
     const getSlotData = (slotConfig) => {
         const teamList = slotConfig.team === 'A' ? teamAParticipants : teamBParticipants;
-        
-        const samePos = teamList.filter(p => (p.position || '').toLowerCase() === slotConfig.position.toLowerCase());
-        const slotIdx = slots.filter(s => s.team === slotConfig.team && s.position === slotConfig.position).indexOf(slotConfig);
-
-        if (samePos[slotIdx]) return samePos[slotIdx];
-        
-        const unassigned = teamList.find(p => !p.__assigned);
-        if (unassigned) {
-            unassigned.__assigned = true;
-            return unassigned;
-        }
-
-        return null;
+        const slotIdx = slots.filter(s => s.team === slotConfig.team).indexOf(slotConfig);
+        return teamList[slotIdx] || null;
     };
 
     const handleMouseEnter = (e, participant) => {
@@ -87,76 +75,50 @@ const FootballPitch = ({
             position: 'relative',
             width: '100%',
             aspectRatio: '1.45 / 1',
-            background: 'linear-gradient(180deg, #14532d 0%, #15803d 50%, #14532d 100%)',
+            background: 'linear-gradient(180deg, #1e3a8a 0%, #2563eb 50%, #1e3a8a 100%)', // Hard court blue
             borderRadius: '18px',
-            border: '2px solid rgba(255,255,255,0.25)',
+            border: '2px solid rgba(255,255,255,0.3)',
             boxShadow: '0 16px 36px rgba(0,0,0,0.5)',
             overflow: 'hidden',
             userSelect: 'none'
         }}>
-            {/* Field Turf Pattern */}
-            <div style={{
-                position: 'absolute',
-                inset: 0,
-                backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 24px, transparent 24px, transparent 48px)',
-                pointerEvents: 'none'
-            }} />
+            {/* Court Markings Outer */}
+            <div style={{ position: 'absolute', inset: '16px', border: '2px solid rgba(255,255,255,0.85)', borderRadius: '2px', pointerEvents: 'none' }} />
 
-            {/* Field Markings */}
-            <div style={{ position: 'absolute', inset: '12px', border: '2px solid rgba(255,255,255,0.65)', borderRadius: '2px', pointerEvents: 'none' }} />
+            {/* Doubles Alleys */}
+            <div style={{ position: 'absolute', top: '16px', bottom: '16px', left: '12%', width: '1px', background: 'rgba(255,255,255,0.7)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: '16px', bottom: '16px', right: '12%', width: '1px', background: 'rgba(255,255,255,0.7)', pointerEvents: 'none' }} />
 
-            {/* Halfway Line */}
-            <div style={{ position: 'absolute', top: '50%', left: '12px', right: '12px', height: '2px', background: 'rgba(255,255,255,0.65)', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            {/* Service Lines & Center Service Line */}
+            <div style={{ position: 'absolute', top: '32%', left: '12%', right: '12%', height: '2px', background: 'rgba(255,255,255,0.85)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: '32%', left: '12%', right: '12%', height: '2px', background: 'rgba(255,255,255,0.85)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: '32%', bottom: '32%', left: '50%', width: '2px', background: 'rgba(255,255,255,0.85)', pointerEvents: 'none' }} />
 
-            {/* Center Circle */}
+            {/* Center Net Divider Line */}
             <div style={{
                 position: 'absolute',
                 top: '50%',
-                left: '50%',
-                width: '100px',
-                height: '100px',
-                border: '2px solid rgba(255,255,255,0.65)',
-                borderRadius: '50%',
-                transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none'
+                left: '16px',
+                right: '16px',
+                height: '4px',
+                background: '#fff',
+                transform: 'translateY(-50%)',
+                boxShadow: '0 0 8px rgba(255,255,255,0.9)',
+                pointerEvents: 'none',
+                zIndex: 5
             }} />
-            <div style={{ position: 'absolute', top: '50%', left: '50%', width: '8px', height: '8px', background: 'rgba(255,255,255,0.9)', borderRadius: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#000', color: '#fff', padding: '2px 10px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 6 }}>
+                NET
+            </div>
 
-            {/* Goal Area Top (Team B Goal Area) */}
-            <div style={{
-                position: 'absolute',
-                top: '12px',
-                left: '50%',
-                width: '42%',
-                height: '22%',
-                border: '2px solid rgba(255,255,255,0.65)',
-                borderTop: 'none',
-                transform: 'translateX(-50%)',
-                pointerEvents: 'none'
-            }} />
+            {/* Team Identifiers */}
+            <div style={{ position: 'absolute', top: '20px', right: '24px', color: 'rgba(255,255,255,0.4)', fontWeight: '900', fontSize: '0.8rem', letterSpacing: '2px' }}>TEAM B</div>
+            <div style={{ position: 'absolute', bottom: '20px', right: '24px', color: 'rgba(255,255,255,0.4)', fontWeight: '900', fontSize: '0.8rem', letterSpacing: '2px' }}>TEAM A</div>
 
-            {/* Goal Area Bottom (Team A Goal Area) */}
-            <div style={{
-                position: 'absolute',
-                bottom: '12px',
-                left: '50%',
-                width: '42%',
-                height: '22%',
-                border: '2px solid rgba(255,255,255,0.65)',
-                borderBottom: 'none',
-                transform: 'translateX(-50%)',
-                pointerEvents: 'none'
-            }} />
-
-            {/* Subtle Team Watermarks */}
-            <div style={{ position: 'absolute', top: '16px', right: '20px', color: 'rgba(255,255,255,0.3)', fontWeight: '900', fontSize: '0.8rem', letterSpacing: '2px' }}>TEAM B</div>
-            <div style={{ position: 'absolute', bottom: '16px', right: '20px', color: 'rgba(255,255,255,0.3)', fontWeight: '900', fontSize: '0.8rem', letterSpacing: '2px' }}>TEAM A</div>
-
-            {/* Render 10 Large Player Slots (Strikers offset horizontally for zero overlap) */}
+            {/* 4 Tennis Player Slots */}
             {slots.map((slotConfig) => {
                 const participant = getSlotData(slotConfig);
                 const isTeamA = slotConfig.team === 'A';
-                const posAbbr = POSITION_ABBREVIATIONS[slotConfig.position] || slotConfig.label || 'PLY';
                 const userId = participant?.user?._id || participant?.user?.id;
 
                 return (
@@ -179,15 +141,7 @@ const FootballPitch = ({
                                 }}
                                 onMouseEnter={(e) => handleMouseEnter(e, participant)}
                                 onMouseLeave={() => setHoveredParticipant(null)}
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    padding: 0
-                                }}
+                                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                             >
                                 <PlayerNodeImage user={participant.user} isTeamA={isTeamA} />
                                 
@@ -197,17 +151,11 @@ const FootballPitch = ({
                                     padding: '2px 8px',
                                     borderRadius: '12px',
                                     border: '1px solid rgba(255,255,255,0.2)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
                                     boxShadow: '0 4px 8px rgba(0,0,0,0.5)',
                                     whiteSpace: 'nowrap'
                                 }}>
                                     <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold' }}>
                                         {participant.user?.name?.split(' ')[0]}
-                                    </span>
-                                    <span style={{ color: isTeamA ? '#38bdf8' : '#f43f5e', fontSize: '0.75rem', fontWeight: '900' }}>
-                                        {posAbbr}
                                     </span>
                                 </div>
                             </button>
@@ -215,19 +163,11 @@ const FootballPitch = ({
                             <button
                                 type="button"
                                 onClick={() => onSelectEmptySlot && onSelectEmptySlot(slotConfig)}
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    padding: 0
-                                }}
+                                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                             >
                                 <div style={{
-                                    width: '44px',
-                                    height: '44px',
+                                    width: '46px',
+                                    height: '46px',
                                     borderRadius: '50%',
                                     border: '2px dashed rgba(255,255,255,0.6)',
                                     background: 'rgba(0,0,0,0.3)',
@@ -236,19 +176,10 @@ const FootballPitch = ({
                                     justifyContent: 'center',
                                     color: '#fff'
                                 }}>
-                                    <Plus size={18} />
+                                    <Plus size={20} />
                                 </div>
-                                <div style={{
-                                    marginTop: '3px',
-                                    background: 'rgba(0,0,0,0.6)',
-                                    color: 'rgba(255,255,255,0.9)',
-                                    padding: '1px 6px',
-                                    borderRadius: '8px',
-                                    fontSize: '0.72rem',
-                                    fontWeight: '700',
-                                    whiteSpace: 'nowrap'
-                                }}>
-                                    {posAbbr}
+                                <div style={{ marginTop: '3px', background: 'rgba(0,0,0,0.6)', color: 'rgba(255,255,255,0.9)', padding: '1px 6px', borderRadius: '8px', fontSize: '0.72rem', fontWeight: '700' }}>
+                                    Open
                                 </div>
                             </button>
                         )}
@@ -256,7 +187,7 @@ const FootballPitch = ({
                 );
             })}
 
-            {/* Desktop Hover Tooltip */}
+            {/* Hover Tooltip */}
             {hoveredParticipant && (
                 <div style={{
                     position: 'fixed',
@@ -277,7 +208,7 @@ const FootballPitch = ({
                 }}>
                     <div>{hoveredParticipant.user?.name}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--primary, #38bdf8)', fontWeight: 'normal', marginTop: '2px' }}>
-                        {hoveredParticipant.position} · Level {hoveredParticipant.user?.skill_level || 3}
+                        Tennis · Level {hoveredParticipant.user?.skill_level || 3}
                     </div>
                 </div>
             )}
@@ -285,4 +216,4 @@ const FootballPitch = ({
     );
 };
 
-export default FootballPitch;
+export default TennisCourt;

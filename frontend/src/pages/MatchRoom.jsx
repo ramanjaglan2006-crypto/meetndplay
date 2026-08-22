@@ -5,12 +5,12 @@ import { useAuth } from '../context/AuthContext';
 
 import MatchHeader from '../components/MatchHeader';
 import MatchSummarySidebar from '../components/MatchSummarySidebar';
-import FootballPitch from '../components/FootballPitch';
+import SportVisualizer from '../components/sports/SportVisualizer';
 import JoinMatchModal from '../components/JoinMatchModal';
 import PlayerPreviewModal from '../components/PlayerPreviewModal';
 import OrganizerControls from '../components/OrganizerControls';
 
-import { Shield, Zap, Info, FileText } from 'lucide-react';
+import { Shield, Zap, Info, FileText, ArrowLeft } from 'lucide-react';
 
 export default function MatchRoom() {
     const { id: matchId } = useParams();
@@ -32,7 +32,7 @@ export default function MatchRoom() {
     if (isLoading) {
         return (
             <div style={{ height: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <div className="spin" style={{ width: '36px', height: '36px', border: '3px solid var(--border-color, #333)', borderTopColor: 'var(--primary, #38bdf8)', borderRadius: '50%' }} />
+                <div className="spin" style={{ width: '36px', height: '36px', border: '3px solid var(--border-color, #E3E6E2)', borderTopColor: 'var(--primary, #F5B91E)', borderRadius: '50%' }} />
             </div>
         );
     }
@@ -41,9 +41,9 @@ export default function MatchRoom() {
         return (
             <div style={{ padding: '3rem', textAlign: 'center' }}>
                 <h2>Match Not Found</h2>
-                <p style={{ color: 'var(--text-muted, #aaa)' }}>This match may have been cancelled or deleted.</p>
-                <button onClick={() => navigate('/discover')} style={{ marginTop: '1rem', padding: '10px 20px', borderRadius: '8px', background: 'var(--primary, #38bdf8)', color: '#000', border: 'none', fontWeight: 'bold' }}>
-                    Back to Matches
+                <p style={{ color: 'var(--text-muted, #626762)' }}>This match may have been cancelled or deleted.</p>
+                <button onClick={() => navigate('/play')} style={{ marginTop: '1rem', padding: '10px 20px', borderRadius: '8px', background: 'var(--primary, #F5B91E)', color: '#000', border: 'none', fontWeight: 'bold' }}>
+                    Back to Play
                 </button>
             </div>
         );
@@ -67,14 +67,14 @@ export default function MatchRoom() {
     };
 
     const handleLeave = () => {
-        if (window.confirm('Are you sure you want to leave this match? Your position slot will be freed.')) {
+        if (window.confirm('Are you sure you want to leave this match? Your spot will be freed.')) {
             leaveMatchMutation.mutate(matchId);
         }
     };
 
     const handleOpenJoinSlot = (slotConfig) => {
         if (isJoined) return;
-        setSelectedSlotPosition(slotConfig?.position || 'Midfielder');
+        setSelectedSlotPosition(slotConfig?.position || slotConfig?.role || 'Midfielder');
         setIsJoinModalOpen(true);
     };
 
@@ -95,7 +95,7 @@ export default function MatchRoom() {
                 onLeave={handleLeave}
             />
 
-            {/* ABOVE THE FOLD — 2-Column Hero Layout (72% Pitch Left / 28% Sidebar Right) */}
+            {/* ABOVE THE FOLD — 2-Column Hero Layout (70-75% Sport Visualizer Left / 25-30% Sidebar Right) */}
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'minmax(0, 2.4fr) minmax(0, 1fr)',
@@ -103,21 +103,25 @@ export default function MatchRoom() {
                 alignItems: 'start'
             }} className="match-room-hero-grid">
                 
-                {/* LEFT HERO: Large Football Pitch (70-75% Width) */}
+                {/* LEFT HERO: Dynamic Sport Visualizer (Football Pitch, Badminton Court, Tennis Court, Pickleball Court, Cricket Field) */}
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                        <span style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-main, #fff)', letterSpacing: '0.5px' }}>
-                            TACTICAL LINEUP
+                        <span style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-main, #171817)', letterSpacing: '0.5px' }}>
+                            {match.sport?.toUpperCase() || 'MATCH'} VISUALIZATION
                         </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #aaa)' }}>
-                            Tap any player to view athlete profile
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #626762)' }}>
+                            Tap any athlete to view profile
                         </span>
                     </div>
 
-                    <FootballPitch
-                        format={match.format || '5-a-side'}
+                    <SportVisualizer
+                        match={match}
                         participants={participants}
-                        onSelectPlayer={(p) => setSelectedParticipantForPreview(p)}
+                        onSelectPlayer={(p) => {
+                            const userId = p.user?._id || p.user?.id;
+                            if (userId) navigate(`/athlete/${userId}`);
+                            else setSelectedParticipantForPreview(p);
+                        }}
                         onSelectEmptySlot={(slot) => handleOpenJoinSlot(slot)}
                     />
                 </div>
@@ -131,7 +135,11 @@ export default function MatchRoom() {
                         capacity={capacity}
                         isJoined={isJoined}
                         onOpenJoin={() => setIsJoinModalOpen(true)}
-                        onSelectParticipant={(p) => setSelectedParticipantForPreview(p)}
+                        onSelectParticipant={(p) => {
+                            const userId = p.user?._id || p.user?.id;
+                            if (userId) navigate(`/athlete/${userId}`);
+                            else setSelectedParticipantForPreview(p);
+                        }}
                     />
                 </div>
             </div>
@@ -150,96 +158,102 @@ export default function MatchRoom() {
 
                 {/* About & Match Rules */}
                 <div style={{
-                    background: 'var(--card-bg, #1a1a1a)',
-                    border: '1px solid var(--border-color, #2d2d2d)',
+                    background: 'var(--card-bg, #ffffff)',
+                    border: '1px solid var(--border-color, #E3E6E2)',
                     borderRadius: '16px',
                     padding: '1.25rem'
                 }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-main, #fff)', marginBottom: '0.75rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Info size={16} color="var(--primary, #38bdf8)" /> ABOUT THIS MATCH
+                    <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-main, #171817)', marginBottom: '0.75rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Info size={16} color="var(--primary-dark, #E5A900)" /> ABOUT THIS MATCH
                     </div>
                     
-                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted, #ccc)', margin: 0, lineHeight: 1.5 }}>
-                        {match.description || 'Casual 5-a-side match. All skill levels welcome. Please arrive 10 minutes before kickoff.'}
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted, #626762)', margin: 0, lineHeight: 1.5 }}>
+                        {match.description || `Casual ${match.sport || 'sports'} match. All skill levels welcome. Please arrive 10 minutes before start time.`}
                     </p>
 
                     {match.rules && (
-                        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #2d2d2d)' }}>
-                            <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-main, #fff)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <FileText size={14} color="var(--primary, #38bdf8)" /> Match Rules
+                        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #E3E6E2)' }}>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-main, #171817)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <FileText size={14} color="var(--primary-dark, #E5A900)" /> Match Rules
                             </div>
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #aaa)', margin: 0 }}>{match.rules}</p>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #626762)', margin: 0 }}>{match.rules}</p>
                         </div>
                     )}
                 </div>
 
                 {/* Detailed Roster Section */}
                 <div>
-                    <h3 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-main, #fff)', marginBottom: '1rem', letterSpacing: '0.5px' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-main, #171817)', marginBottom: '1rem', letterSpacing: '0.5px' }}>
                         FULL ATHLETE ROSTER
                     </h3>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }} className="match-roster-grid">
                         
                         {/* Team A Roster Cards */}
-                        <div style={{ background: 'var(--card-bg, #1a1a1a)', border: '1px solid var(--border-color, #2d2d2d)', borderRadius: '16px', padding: '1.25rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#38bdf8', fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                                <Shield size={16} /> TEAM A ({teamAParticipants.length} / 5)
+                        <div style={{ background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color, #E3E6E2)', borderRadius: '16px', padding: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0284c7', fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                                <Shield size={16} /> TEAM A ({teamAParticipants.length} / {Math.ceil(capacity.total / 2)})
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {teamAParticipants.map((p) => (
-                                    <div
-                                        key={p.id || p.user?._id || p.user?.id}
-                                        onClick={() => setSelectedParticipantForPreview(p)}
-                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', cursor: 'pointer' }}
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <img
-                                                src={p.user?.photos?.[0]?.url || p.user?.photos?.[0] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'}
-                                                alt={p.user?.name}
-                                                style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
-                                            />
-                                            <div>
-                                                <div style={{ fontWeight: 'bold', fontSize: '0.88rem', color: 'var(--text-main, #fff)' }}>{p.user?.name}</div>
-                                                <div style={{ fontSize: '0.75rem', color: '#38bdf8' }}>Match Position: {p.position}</div>
+                                {teamAParticipants.map((p) => {
+                                    const uid = p.user?._id || p.user?.id;
+                                    return (
+                                        <div
+                                            key={p.id || uid}
+                                            onClick={() => uid ? navigate(`/athlete/${uid}`) : setSelectedParticipantForPreview(p)}
+                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--bg-dark, #F6F7F5)', borderRadius: '10px', cursor: 'pointer' }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <img
+                                                    src={p.user?.photos?.[0]?.url || p.user?.photos?.[0] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'}
+                                                    alt={p.user?.name}
+                                                    style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+                                                />
+                                                <div>
+                                                    <div style={{ fontWeight: 'bold', fontSize: '0.88rem', color: 'var(--text-main, #171817)' }}>{p.user?.name}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: '#0284c7' }}>{p.position || p.role || 'Player'}</div>
+                                                </div>
                                             </div>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #626762)' }}>
+                                                Level {p.user?.skill_level || 3}
+                                            </span>
                                         </div>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #aaa)' }}>
-                                            Level {p.user?.skill_level || 3}
-                                        </span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 
                         {/* Team B Roster Cards */}
-                        <div style={{ background: 'var(--card-bg, #1a1a1a)', border: '1px solid var(--border-color, #2d2d2d)', borderRadius: '16px', padding: '1.25rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f43f5e', fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                                <Zap size={16} /> TEAM B ({teamBParticipants.length} / 5)
+                        <div style={{ background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color, #E3E6E2)', borderRadius: '16px', padding: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e11d48', fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                                <Zap size={16} /> TEAM B ({teamBParticipants.length} / {Math.floor(capacity.total / 2)})
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {teamBParticipants.map((p) => (
-                                    <div
-                                        key={p.id || p.user?._id || p.user?.id}
-                                        onClick={() => setSelectedParticipantForPreview(p)}
-                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', cursor: 'pointer' }}
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <img
-                                                src={p.user?.photos?.[0]?.url || p.user?.photos?.[0] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'}
-                                                alt={p.user?.name}
-                                                style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
-                                            />
-                                            <div>
-                                                <div style={{ fontWeight: 'bold', fontSize: '0.88rem', color: 'var(--text-main, #fff)' }}>{p.user?.name}</div>
-                                                <div style={{ fontSize: '0.75rem', color: '#f43f5e' }}>Match Position: {p.position}</div>
+                                {teamBParticipants.map((p) => {
+                                    const uid = p.user?._id || p.user?.id;
+                                    return (
+                                        <div
+                                            key={p.id || uid}
+                                            onClick={() => uid ? navigate(`/athlete/${uid}`) : setSelectedParticipantForPreview(p)}
+                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--bg-dark, #F6F7F5)', borderRadius: '10px', cursor: 'pointer' }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <img
+                                                    src={p.user?.photos?.[0]?.url || p.user?.photos?.[0] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'}
+                                                    alt={p.user?.name}
+                                                    style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+                                                />
+                                                <div>
+                                                    <div style={{ fontWeight: 'bold', fontSize: '0.88rem', color: 'var(--text-main, #171817)' }}>{p.user?.name}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: '#e11d48' }}>{p.position || p.role || 'Player'}</div>
+                                                </div>
                                             </div>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #626762)' }}>
+                                                Level {p.user?.skill_level || 3}
+                                            </span>
                                         </div>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #aaa)' }}>
-                                            Level {p.user?.skill_level || 3}
-                                        </span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -258,7 +272,7 @@ export default function MatchRoom() {
 
             <PlayerPreviewModal
                 participant={selectedParticipantForPreview}
-                matchContext={`Playing in: ${match.sport} ${match.format || '5-a-side'} match at ${match.locationName}`}
+                matchContext={`Playing in: ${match.sport} ${match.format || ''} match at ${match.locationName}`}
                 isOpen={!!selectedParticipantForPreview}
                 onClose={() => setSelectedParticipantForPreview(null)}
             />
