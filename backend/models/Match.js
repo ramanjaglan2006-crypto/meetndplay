@@ -22,7 +22,6 @@ const matchSchema = new mongoose.Schema({
   },
   format: {
     type: String,
-    enum: ['5-a-side', '7-a-side', '11-a-side'],
     default: '5-a-side'
   },
   playersPerTeam: {
@@ -47,11 +46,16 @@ const matchSchema = new mongoose.Schema({
   skillLevel: {
     type: Number,
     min: 1,
-    max: 5
+    max: 5,
+    default: 3
   },
   dateTime: {
     type: Date,
     required: true
+  },
+  durationMinutes: {
+    type: Number,
+    default: 60
   },
   locationName: {
     type: String,
@@ -66,6 +70,19 @@ const matchSchema = new mongoose.Schema({
   },
   rules: {
     type: String
+  },
+  matchType: {
+    type: String,
+    default: 'Casual'
+  },
+  visibility: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'public'
+  },
+  approvalRequired: {
+    type: Boolean,
+    default: false
   },
   status: {
     type: String,

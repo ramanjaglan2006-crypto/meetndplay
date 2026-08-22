@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Search, Bell, Menu, PlayCircle, MapPin, Users } from 'lucide-react';
+import { Search, Bell, Menu, PlayCircle, MapPin, Users, Plus } from 'lucide-react';
 
 const Topbar = ({ toggleMobileMenu }) => {
     const navigate = useNavigate();
@@ -12,7 +12,7 @@ const Topbar = ({ toggleMobileMenu }) => {
             borderBottom: '1px solid var(--border-color, #E3E6E2)',
             display: 'flex',
             alignItems: 'center',
-            justify: 'space-between',
+            justifyContent: 'space-between',
             padding: '0 2rem',
             position: 'sticky',
             top: 0,
@@ -109,8 +109,29 @@ const Topbar = ({ toggleMobileMenu }) => {
                 </NavLink>
             </nav>
 
-            {/* Right: Notifications */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {/* Right: + Create Match CTA & Notifications */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                    onClick={() => navigate('/play/create')}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        background: 'var(--primary, #F5B91E)',
+                        color: '#000',
+                        fontWeight: '900',
+                        fontSize: '0.85rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 10px rgba(245, 185, 30, 0.3)',
+                        transition: 'transform 0.15s ease'
+                    }}
+                >
+                    <Plus size={16} strokeWidth={3} /> CREATE MATCH
+                </button>
+
                 <button style={{
                     width: '38px', height: '38px', borderRadius: '50%', border: '1px solid var(--border-color, #E3E6E2)',
                     background: 'var(--bg-dark, #F6F7F5)', display: 'flex', alignItems: 'center', justifyContent: 'center',

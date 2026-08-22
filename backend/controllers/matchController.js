@@ -4,42 +4,78 @@ const Message = require('../models/Message');
 
 const createMatch = async (req, res) => {
     try {
-        const { sport, title, date, time, locationName, lat, lon, maxPlayers = 10, format = '5-a-side', skillLevel, description, rules } = req.body;
+        const {
+            sport = 'Football',
+            title,
+            date,
+            time,
+            durationMinutes = 60,
+            locationName = 'Local Pitch',
+            lat = 0,
+            lon = 0,
+            maxPlayers = 10,
+            totalPlayers,
+            playersPerTeam,
+            format = '5-a-side',
+            skillLevel = 3,
+            description = '',
+            rules = '',
+            matchType = 'Casual',
+            visibility = 'public',
+            approvalRequired = false,
+            community
+        } = req.body;
+
+        const calculatedTotal = parseInt(totalPlayers || maxPlayers) || 10;
+        const calculatedPerTeam = parseInt(playersPerTeam) || Math.ceil(calculatedTotal / 2);
         
+        let matchDate = new Date();
+        if (date && time) {
+            matchDate = new Date(`${date}T${time}`);
+        } else if (date) {
+            matchDate = new Date(date);
+        }
+
         const match = new Match({
             title: title || `${format} ${sport} Match`,
-            sport: sport || 'Football',
+            sport,
             format,
-            playersPerTeam: format === '5-a-side' ? 5 : (format === '7-a-side' ? 7 : 11),
+            playersPerTeam: calculatedPerTeam,
             hostId: req.userId,
             joinedPlayers: [req.userId],
-            totalPlayers: parseInt(maxPlayers) || (format === '5-a-side' ? 10 : 14),
+            totalPlayers: calculatedTotal,
             skillLevel: parseInt(skillLevel) || 3,
-            dateTime: new Date(`${date}T${time}`),
+            dateTime: matchDate,
+            durationMinutes: parseInt(durationMinutes) || 60,
             locationName,
             location: {
                 type: 'Point',
                 coordinates: [parseFloat(lon || 0), parseFloat(lat || 0)]
             },
             description,
-            rules
+            rules,
+            matchType,
+            visibility,
+            approvalRequired: !!approvalRequired,
+            community
         });
         
         await match.save();
 
         // Create initial host participation
+        const hostPosition = sport.toLowerCase().includes('football') ? 'Striker' : (sport.toLowerCase().includes('cricket') ? 'Batsman' : 'Player');
         const hostParticipation = new MatchParticipation({
             matchId: match._id,
             userId: req.userId,
             team: 'A',
-            position: 'Striker',
+            position: hostPosition,
             status: 'confirmed'
         });
         await hostParticipation.save();
 
-        if (req.body.community) {
+        if (community) {
             const sysMessage = new Message({
-                community: req.body.community,
+                community,
                 type: 'system',
                 sender: req.userId,
                 text: 'created a match',
@@ -49,16 +85,16 @@ const createMatch = async (req, res) => {
                 }
             });
             await sysMessage.save();
-            const populatedMsg = await Message.findById(sysMessage._id).populate('sender', 'name profilePicture');
-            if (req.io) {
-                req.io.to(`community:${req.body.community}`).emit('new_community_message', populatedMsg);
-            }
+        }
+
+        if (req.io) {
+            req.io.emit('match_created', match);
         }
 
         res.status(201).json(match);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error creating match:', err);
+        res.status(500).json({ error: 'Server error creating match' });
     }
 };
 
@@ -116,20 +152,19 @@ const getMatchRoom = async (req, res) => {
         
         if (!match) return res.status(404).json({ error: 'Match not found' });
 
-        // Ensure host has a MatchParticipation record
         let hostPart = await MatchParticipation.findOne({ matchId: match._id, userId: match.hostId._id, status: 'confirmed' });
         if (!hostPart) {
+            const hostPos = (match.sport || '').toLowerCase().includes('football') ? 'Striker' : ((match.sport || '').toLowerCase().includes('cricket') ? 'Batsman' : 'Player');
             hostPart = new MatchParticipation({
                 matchId: match._id,
                 userId: match.hostId._id,
                 team: 'A',
-                position: 'Striker',
+                position: hostPos,
                 status: 'confirmed'
             });
             await hostPart.save();
         }
 
-        // Fetch all confirmed participants
         const participants = await MatchParticipation.find({ matchId: match._id, status: 'confirmed' })
             .populate('userId', 'name photos locationName age sports bio reputation achievements interests')
             .sort({ joinedAt: 1 });
@@ -162,17 +197,15 @@ const getMatchRoom = async (req, res) => {
 
 const joinMatch = async (req, res) => {
     try {
-        const { position = 'Midfielder', openToOtherPositions = false } = req.body;
+        const { position = 'Player', openToOtherPositions = false } = req.body;
         const match = await Match.findById(req.params.id);
         if (!match) return res.status(404).json({ error: 'Match not found' });
         
         if (match.status !== 'open') return res.status(400).json({ error: 'Match is full or cancelled' });
         
-        // Uniqueness check
         const existing = await MatchParticipation.findOne({ matchId: match._id, userId: req.userId, status: 'confirmed' });
         if (existing) return res.status(400).json({ error: 'Already joined this match' });
         
-        // Count confirmed participants to enforce capacity strictly
         const currentCount = await MatchParticipation.countDocuments({ matchId: match._id, status: 'confirmed' });
         if (currentCount >= match.totalPlayers) {
             match.status = 'full';
@@ -180,7 +213,6 @@ const joinMatch = async (req, res) => {
             return res.status(400).json({ error: 'Match is full' });
         }
 
-        // Team assignment: count A vs B
         const teamACount = await MatchParticipation.countDocuments({ matchId: match._id, team: 'A', status: 'confirmed' });
         const teamBCount = await MatchParticipation.countDocuments({ matchId: match._id, team: 'B', status: 'confirmed' });
         const assignedTeam = teamACount <= teamBCount ? 'A' : 'B';
@@ -271,7 +303,6 @@ const removeParticipant = async (req, res) => {
         const match = await Match.findById(req.params.id);
         if (!match) return res.status(404).json({ error: 'Match not found' });
 
-        // Authorization check: Only match host/organizer can remove a participant
         if (match.hostId.toString() !== req.userId) {
             return res.status(403).json({ error: 'Unauthorized: Only organizer can remove players' });
         }

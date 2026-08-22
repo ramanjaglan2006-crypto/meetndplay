@@ -18,6 +18,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
 const Tournaments = lazy(() => import('./pages/Tournaments'));
 const MatchRoom = lazy(() => import('./pages/MatchRoom'));
+const CreateMatchPage = lazy(() => import('./pages/CreateMatchPage'));
 const Auth = lazy(() => import('./pages/Auth'));
 
 function AppRoutes() {
@@ -47,6 +48,8 @@ function AppRoutes() {
               <Routes>
                 <Route path="/" element={<Dashboard theme={theme} toggleTheme={toggleTheme} />} />
                 <Route path="/play" element={<PlayPage />} />
+                <Route path="/play/create" element={<CreateMatchPage />} />
+                <Route path="/create" element={<CreateMatchPage />} />
                 <Route path="/book" element={<BookPage />} />
                 <Route path="/connect" element={<ConnectPage />} />
                 <Route path="/discover" element={<Discover />} />
@@ -60,7 +63,6 @@ function AppRoutes() {
                 <Route path="/profile/edit" element={<ProfileEdit />} />
                 <Route path="/profile/:id" element={<Profile />} />
                 <Route path="/athlete/:id" element={<Profile />} />
-                <Route path="/create" element={<div style={{ padding: '2rem' }}><h1>Host Match</h1><p>Feature under development...</p></div>} />
               </Routes>
             </Suspense>
           </MainLayout>

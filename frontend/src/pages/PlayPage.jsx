@@ -6,7 +6,7 @@ import { SEED_MATCHES } from '../config/seedMatches';
 import SportSelector from '../components/home/SportSelector';
 import MatchCard from '../components/MatchCard';
 
-import { Search, MapPin, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, MapPin, Filter, ArrowUpDown, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function PlayPage() {
@@ -21,7 +21,7 @@ export default function PlayPage() {
 
     const { data: apiMatches = [], isLoading: matchesLoading } = useMatches();
 
-    // Merge API matches with seed dataset (16 matches total)
+    // Merge API matches with seed dataset
     const allMatches = useMemo(() => {
         const merged = [...apiMatches];
         const existingIds = new Set(merged.map(m => m._id || m.id));
@@ -37,7 +37,6 @@ export default function PlayPage() {
     const filteredMatches = useMemo(() => {
         let list = [...allMatches];
 
-        // Search query filter
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(m => 
@@ -47,19 +46,16 @@ export default function PlayPage() {
             );
         }
 
-        // Sport filter
         if (selectedSport !== 'All') {
             list = list.filter(m => (m.sport || '').toLowerCase() === selectedSport.toLowerCase());
         }
 
-        // Skill level filter
         if (selectedSkill !== 'All') {
             const lvlMap = { 'Beginner': 2, 'Intermediate': 3, 'Advanced': 4 };
             const targetLvl = lvlMap[selectedSkill] || 3;
             list = list.filter(m => (m.skillLevel || 3) === targetLvl);
         }
 
-        // Sorting
         if (sortBy === 'Soonest') {
             list.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
         } else if (sortBy === 'Closest') {
@@ -77,13 +73,35 @@ export default function PlayPage() {
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.25rem' }}>
             
             {/* Page Header */}
-            <div style={{ marginBottom: '1.5rem' }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-main, #171817)', margin: '0 0 6px 0', letterSpacing: '-0.5px' }}>
-                    PLAY — Active Sports Matches
-                </h1>
-                <p style={{ fontSize: '0.95rem', color: 'var(--text-muted, #626762)', margin: 0 }}>
-                    Find your next game, select your position, and get on the field.
-                </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                    <h1 style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-main, #171817)', margin: '0 0 6px 0', letterSpacing: '-0.5px' }}>
+                        PLAY — Active Sports Matches
+                    </h1>
+                    <p style={{ fontSize: '0.95rem', color: 'var(--text-muted, #626762)', margin: 0 }}>
+                        Find your next game, select your position, and get on the field.
+                    </p>
+                </div>
+
+                <button
+                    onClick={() => navigate('/play/create')}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '12px 24px',
+                        borderRadius: '14px',
+                        background: 'var(--primary, #F5B91E)',
+                        color: '#000',
+                        fontWeight: '900',
+                        fontSize: '0.95rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(245, 185, 30, 0.4)'
+                    }}
+                >
+                    <Plus size={20} strokeWidth={3} /> CREATE MATCH
+                </button>
             </div>
 
             {/* Search & Filter Controls */}
@@ -99,7 +117,6 @@ export default function PlayPage() {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
             }}>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    {/* Search Input */}
                     <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
                         <Search size={18} color="var(--text-muted, #626762)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                         <input
@@ -120,7 +137,6 @@ export default function PlayPage() {
                         />
                     </div>
 
-                    {/* Skill Level Selector */}
                     <select
                         value={selectedSkill}
                         onChange={(e) => setSelectedSkill(e.target.value)}
@@ -141,7 +157,6 @@ export default function PlayPage() {
                         <option value="Advanced">Advanced</option>
                     </select>
 
-                    {/* Sort Dropdown */}
                     <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
@@ -163,11 +178,10 @@ export default function PlayPage() {
                     </select>
                 </div>
 
-                {/* Sport Filter Pills */}
                 <SportSelector selectedSport={selectedSport} onSelectSport={(sport) => setSelectedSport(sport)} />
             </div>
 
-            {/* Matches Grid (3-Column Desktop) */}
+            {/* Matches Grid */}
             {matchesLoading ? (
                 <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading active matches...</div>
             ) : filteredMatches.length === 0 ? (
@@ -180,7 +194,7 @@ export default function PlayPage() {
                 }}>
                     <p style={{ color: 'var(--text-muted, #626762)', margin: '0 0 1rem 0' }}>No matches found matching your filters.</p>
                     <button
-                        onClick={() => navigate('/create')}
+                        onClick={() => navigate('/play/create')}
                         style={{ padding: '10px 20px', borderRadius: '10px', background: 'var(--primary, #F5B91E)', color: '#000', border: 'none', fontWeight: 'bold' }}
                     >
                         Host a Match
