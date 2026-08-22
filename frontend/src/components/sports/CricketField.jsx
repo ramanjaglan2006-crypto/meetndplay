@@ -42,40 +42,98 @@ const PlayerNodeImage = ({ user, isTeamA }) => {
     );
 };
 
-// Calculate coordinates: Team A on LEFT side, Team B on RIGHT side.
-// Vertical role tiering for BOTH teams: Top = Batsmen, Middle = All-Rounders, Bottom = Bowlers.
-const getCricketCoordinates = (roleStr = '', team = 'A', roleIndex = 0) => {
+// Generate dynamic role slots based on teamSize (playersPerTeam)
+// Team A = LEFT side (x: 14%-38%) | Team B = RIGHT side (x: 62%-86%)
+// TOP Zone = Batsmen | MID Zone = All-Rounders | BOTTOM Zone = Bowlers | OUTER = Flex
+const generateCricketSlots = (team = 'A', teamSize = 5) => {
     const isTeamA = team === 'A';
-    const role = roleStr.toLowerCase();
+    const slots = [];
 
-    if (role.includes('keeper') || role.includes('wk')) {
-        return isTeamA ? { x: 36, y: 14 } : { x: 64, y: 14 };
+    let batCount = 2;
+    let allCount = 1;
+    let bowlCount = 2;
+    let flexCount = 0;
+
+    if (teamSize >= 8) {
+        batCount = 3;
+        allCount = 2;
+        bowlCount = 3;
+        flexCount = Math.max(0, teamSize - 8);
+    } else if (teamSize === 6 || teamSize === 7) {
+        batCount = 2;
+        allCount = 2;
+        bowlCount = teamSize - 4;
     }
 
-    if (role.includes('bat')) {
-        // TOP ZONE — BATSMEN
-        const batA = [{ x: 18, y: 20 }, { x: 34, y: 26 }, { x: 16, y: 32 }];
-        const batB = [{ x: 82, y: 20 }, { x: 66, y: 26 }, { x: 84, y: 32 }];
-        const list = isTeamA ? batA : batB;
-        return list[roleIndex % list.length];
+    // 1. BATSMEN SLOTS (Top Zone: y = 18%-28%)
+    const batCoordsA = [{ x: 18, y: 18 }, { x: 34, y: 18 }, { x: 26, y: 28 }];
+    const batCoordsB = [{ x: 82, y: 18 }, { x: 66, y: 18 }, { x: 74, y: 28 }];
+
+    for (let i = 0; i < batCount; i++) {
+        const coords = isTeamA ? batCoordsA[i % batCoordsA.length] : batCoordsB[i % batCoordsB.length];
+        slots.push({
+            id: `${team}-bat-${i + 1}`,
+            team,
+            role: 'Batsman',
+            roleIndex: i,
+            x: coords.x,
+            y: coords.y
+        });
     }
 
-    if (role.includes('all') || role.includes('round')) {
-        // MIDDLE ZONE — ALL-ROUNDERS
-        const allA = [{ x: 20, y: 48 }, { x: 34, y: 56 }];
-        const allB = [{ x: 80, y: 48 }, { x: 66, y: 56 }];
-        const list = isTeamA ? allA : allB;
-        return list[roleIndex % list.length];
+    // 2. ALL-ROUNDER SLOTS (Center Zone: y = 46%-56%)
+    const allCoordsA = [{ x: 20, y: 48 }, { x: 34, y: 56 }];
+    const allCoordsB = [{ x: 80, y: 48 }, { x: 66, y: 56 }];
+
+    for (let i = 0; i < allCount; i++) {
+        const coords = isTeamA ? allCoordsA[i % allCoordsA.length] : allCoordsB[i % allCoordsB.length];
+        slots.push({
+            id: `${team}-all-${i + 1}`,
+            team,
+            role: 'All-Rounder',
+            roleIndex: i,
+            x: coords.x,
+            y: coords.y
+        });
     }
 
-    // BOTTOM ZONE — BOWLERS
-    const bowlA = [{ x: 18, y: 74 }, { x: 34, y: 82 }];
-    const bowlB = [{ x: 82, y: 74 }, { x: 66, y: 82 }];
-    const list = isTeamA ? bowlA : bowlB;
-    return list[roleIndex % list.length];
+    // 3. BOWLER SLOTS (Bottom Zone: y = 72%-82%)
+    const bowlCoordsA = [{ x: 18, y: 74 }, { x: 34, y: 82 }, { x: 26, y: 74 }];
+    const bowlCoordsB = [{ x: 82, y: 74 }, { x: 66, y: 82 }, { x: 74, y: 74 }];
+
+    for (let i = 0; i < bowlCount; i++) {
+        const coords = isTeamA ? bowlCoordsA[i % bowlCoordsA.length] : bowlCoordsB[i % bowlCoordsB.length];
+        slots.push({
+            id: `${team}-bowl-${i + 1}`,
+            team,
+            role: 'Bowler',
+            roleIndex: i,
+            x: coords.x,
+            y: coords.y
+        });
+    }
+
+    // 4. FLEX / FIELD SLOTS (If teamSize > 8)
+    const flexCoordsA = [{ x: 12, y: 36 }, { x: 12, y: 64 }, { x: 40, y: 36 }, { x: 40, y: 64 }];
+    const flexCoordsB = [{ x: 88, y: 36 }, { x: 88, y: 64 }, { x: 60, y: 36 }, { x: 60, y: 64 }];
+
+    for (let i = 0; i < flexCount; i++) {
+        const coords = isTeamA ? flexCoordsA[i % flexCoordsA.length] : flexCoordsB[i % flexCoordsB.length];
+        slots.push({
+            id: `${team}-flex-${i + 1}`,
+            team,
+            role: 'Flex',
+            roleIndex: i,
+            x: coords.x,
+            y: coords.y
+        });
+    }
+
+    return slots;
 };
 
 const CricketField = ({
+    match = {},
     participants = [],
     onSelectPlayer,
     onSelectEmptySlot
@@ -84,26 +142,14 @@ const CricketField = ({
     const [hoveredParticipant, setHoveredParticipant] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
+    const teamSize = match.playersPerTeam || Math.ceil((match.totalPlayers || 10) / 2) || 5;
+
+    const teamASlots = generateCricketSlots('A', teamSize);
+    const teamBSlots = generateCricketSlots('B', teamSize);
+    const allSlots = [...teamASlots, ...teamBSlots];
+
     const teamAParticipants = participants.filter(p => p.team === 'A');
     const teamBParticipants = participants.filter(p => p.team === 'B');
-
-    const DEFAULT_SLOTS = [
-        // TEAM A (LEFT SIDE)
-        { id: 'a-bat-1', team: 'A', role: 'Batsman', roleIndex: 0 },
-        { id: 'a-bat-2', team: 'A', role: 'Batsman', roleIndex: 1 },
-        { id: 'a-wk-1', team: 'A', role: 'Wicketkeeper', roleIndex: 0 },
-        { id: 'a-all-1', team: 'A', role: 'All-Rounder', roleIndex: 0 },
-        { id: 'a-bowl-1', team: 'A', role: 'Bowler', roleIndex: 0 },
-        { id: 'a-bowl-2', team: 'A', role: 'Bowler', roleIndex: 1 },
-
-        // TEAM B (RIGHT SIDE)
-        { id: 'b-bat-1', team: 'B', role: 'Batsman', roleIndex: 0 },
-        { id: 'b-bat-2', team: 'B', role: 'Batsman', roleIndex: 1 },
-        { id: 'b-wk-1', team: 'B', role: 'Wicketkeeper', roleIndex: 0 },
-        { id: 'b-all-1', team: 'B', role: 'All-Rounder', roleIndex: 0 },
-        { id: 'b-bowl-1', team: 'B', role: 'Bowler', roleIndex: 0 },
-        { id: 'b-bowl-2', team: 'B', role: 'Bowler', roleIndex: 1 }
-    ];
 
     const getSlotParticipant = (slotConfig) => {
         const teamList = slotConfig.team === 'A' ? teamAParticipants : teamBParticipants;
@@ -127,14 +173,14 @@ const CricketField = ({
         if (r.includes('bat')) return 'BAT';
         if (r.includes('all') || r.includes('round')) return 'ALL';
         if (r.includes('bowl')) return 'BOWL';
-        return 'PLY';
+        return 'FLEX';
     };
 
     return (
         <div style={{
             position: 'relative',
             width: '100%',
-            aspectRatio: '1.35 / 1', // Wider ground as requested!
+            aspectRatio: '1.35 / 1',
             background: 'radial-gradient(ellipse at center, #15803d 0%, #166534 60%, #14532d 100%)',
             borderRadius: '24px',
             border: '2px solid rgba(255,255,255,0.3)',
@@ -200,7 +246,7 @@ const CricketField = ({
                 </div>
             </div>
 
-            {/* Prominent Team Identifiers: TEAM A (Left Side) & TEAM B (Right Side) */}
+            {/* Team Identifiers */}
             <div style={{
                 position: 'absolute',
                 top: '20px',
@@ -215,7 +261,7 @@ const CricketField = ({
                 boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                 zIndex: 15
             }}>
-                🛡 TEAM A (LEFT SIDE)
+                🛡 TEAM A ({teamAParticipants.length}/{teamSize})
             </div>
 
             <div style={{
@@ -232,25 +278,24 @@ const CricketField = ({
                 boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                 zIndex: 15
             }}>
-                ⚡ TEAM B (RIGHT SIDE)
+                ⚡ TEAM B ({teamBParticipants.length}/{teamSize})
             </div>
 
-            {/* Role Zone Indicators on Left & Right */}
-            <div style={{ position: 'absolute', top: '28px', left: '160px', color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', fontWeight: '900', letterSpacing: '1px' }}>
-                TOP: BATSMEN
+            {/* Subtle Role Zone Indicators */}
+            <div style={{ position: 'absolute', top: '22px', left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', fontWeight: '900', letterSpacing: '1px' }}>
+                BATSMEN (TOP)
             </div>
-            <div style={{ position: 'absolute', top: '50%', left: '24px', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', fontWeight: '900', letterSpacing: '1px' }}>
-                MID: ALL-ROUNDERS
+            <div style={{ position: 'absolute', top: '50%', left: '22px', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)', fontSize: '0.7rem', fontWeight: '900', letterSpacing: '1px' }}>
+                ALL-ROUNDERS
             </div>
-            <div style={{ position: 'absolute', bottom: '24px', left: '24px', color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', fontWeight: '900', letterSpacing: '1px' }}>
-                BOTTOM: BOWLERS
+            <div style={{ position: 'absolute', bottom: '22px', left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', fontWeight: '900', letterSpacing: '1px' }}>
+                BOWLERS (BOTTOM)
             </div>
 
-            {/* Render Cricket Player Nodes */}
-            {DEFAULT_SLOTS.map((slotConfig) => {
+            {/* Render Dynamic Cricket Player & Empty Position Slots */}
+            {allSlots.map((slotConfig) => {
                 const participant = getSlotParticipant(slotConfig);
                 const isTeamA = slotConfig.team === 'A';
-                const coords = getCricketCoordinates(participant?.position || participant?.role || slotConfig.role, slotConfig.team, slotConfig.roleIndex);
                 const userId = participant?.user?._id || participant?.user?.id;
                 const roleAbbr = getRoleAbbr(participant?.position || participant?.role || slotConfig.role);
 
@@ -259,8 +304,8 @@ const CricketField = ({
                         key={slotConfig.id}
                         style={{
                             position: 'absolute',
-                            left: `${coords.x}%`,
-                            top: `${coords.y}%`,
+                            left: `${slotConfig.x}%`,
+                            top: `${slotConfig.y}%`,
                             transform: 'translate(-50%, -50%)',
                             zIndex: 10
                         }}
@@ -318,7 +363,7 @@ const CricketField = ({
                                     <Plus size={18} color={isTeamA ? '#38bdf8' : '#f43f5e'} />
                                 </div>
                                 <div style={{ marginTop: '3px', background: 'rgba(0,0,0,0.65)', color: 'rgba(255,255,255,0.9)', padding: '1px 6px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '700' }}>
-                                    {getRoleAbbr(slotConfig.role)}
+                                    (+) {slotConfig.role}
                                 </div>
                             </button>
                         )}

@@ -46,6 +46,7 @@ const SportVisualizer = ({
     if (sportName.includes('cricket')) {
         return (
             <CricketField
+                match={match}
                 participants={participants}
                 onSelectPlayer={onSelectPlayer}
                 onSelectEmptySlot={onSelectEmptySlot}
