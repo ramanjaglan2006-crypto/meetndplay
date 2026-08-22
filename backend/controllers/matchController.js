@@ -62,7 +62,6 @@ const createMatch = async (req, res) => {
         
         await match.save();
 
-        // Create initial host participation
         const hostPosition = sport.toLowerCase().includes('football') ? 'Striker' : (sport.toLowerCase().includes('cricket') ? 'Batsman' : 'Player');
         const hostParticipation = new MatchParticipation({
             matchId: match._id,
@@ -109,6 +108,67 @@ const getMatches = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getMyMatches = async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        // 1. Fetch matches created by authenticated user
+        const createdMatches = await Match.find({ hostId: userId })
+            .select('-__v -updatedAt')
+            .populate('hostId', 'name profileImage photos')
+            .populate('joinedPlayers', 'name profileImage photos')
+            .sort({ dateTime: -1 });
+
+        // 2. Fetch matches joined by authenticated user
+        const participations = await MatchParticipation.find({ userId, status: 'confirmed' })
+            .populate({
+                path: 'matchId',
+                populate: { path: 'hostId', select: 'name profileImage photos' }
+            })
+            .sort({ joinedAt: -1 });
+
+        const joinedMatches = [];
+        participations.forEach(p => {
+            if (p.matchId) {
+                const matchObj = p.matchId.toObject ? p.matchId.toObject() : p.matchId;
+                // Exclude matches created by self if already in createdMatches
+                if (matchObj.hostId?._id?.toString() !== userId.toString() && matchObj.hostId?.toString() !== userId.toString()) {
+                    joinedMatches.push({
+                        ...matchObj,
+                        myPosition: p.position,
+                        myRole: p.position,
+                        joinedAt: p.joinedAt
+                    });
+                }
+            }
+        });
+
+        // Compute Statistics
+        const now = new Date();
+        const allUserMatches = [...createdMatches, ...joinedMatches];
+        const upcomingMatches = allUserMatches.filter(m => new Date(m.dateTime) >= now && m.status !== 'cancelled');
+        const completedMatches = allUserMatches.filter(m => new Date(m.dateTime) < now || m.status === 'completed');
+
+        upcomingMatches.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+        const nextGame = upcomingMatches.length > 0 ? upcomingMatches[0] : null;
+
+        res.json({
+            created: createdMatches,
+            joined: joinedMatches,
+            stats: {
+                createdCount: createdMatches.length,
+                joinedCount: joinedMatches.length,
+                upcomingCount: upcomingMatches.length,
+                completedCount: completedMatches.length
+            },
+            nextGame
+        });
+    } catch (err) {
+        console.error('Error fetching my matches:', err);
+        res.status(500).json({ error: 'Server error fetching my matches' });
     }
 };
 
@@ -327,4 +387,4 @@ const removeParticipant = async (req, res) => {
     }
 };
 
-module.exports = { createMatch, getMatches, getNearbyMatches, getMatchRoom, joinMatch, leaveMatch, updatePosition, removeParticipant };
+module.exports = { createMatch, getMatches, getMyMatches, getNearbyMatches, getMatchRoom, joinMatch, leaveMatch, updatePosition, removeParticipant };

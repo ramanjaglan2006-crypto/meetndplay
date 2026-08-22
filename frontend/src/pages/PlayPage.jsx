@@ -75,7 +75,7 @@ export default function PlayPage() {
             {/* Page Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-main, #171817)', margin: '0 0 6px 0', letterSpacing: '-0.5px' }}>
+                    <h1 style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-main, #171817)', margin: '0 0 4px 0', letterSpacing: '-0.5px' }}>
                         PLAY — Active Sports Matches
                     </h1>
                     <p style={{ fontSize: '0.95rem', color: 'var(--text-muted, #626762)', margin: 0 }}>
@@ -83,25 +83,26 @@ export default function PlayPage() {
                     </p>
                 </div>
 
-                <button
-                    onClick={() => navigate('/play/create')}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '12px 24px',
-                        borderRadius: '14px',
-                        background: 'var(--primary, #F5B91E)',
-                        color: '#000',
-                        fontWeight: '900',
-                        fontSize: '0.95rem',
-                        border: 'none',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 14px rgba(245, 185, 30, 0.4)'
-                    }}
-                >
-                    <Plus size={20} strokeWidth={3} /> CREATE MATCH
-                </button>
+                {/* Subnav Pill Tabs (Find Matches | My Matches | + Create Match) */}
+                <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-dark, #F6F7F5)', padding: '4px', borderRadius: '14px', border: '1px solid var(--border-color, #E3E6E2)' }}>
+                    <button
+                        style={{ padding: '8px 16px', borderRadius: '10px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color, #E3E6E2)', color: 'var(--text-main, #171817)', fontWeight: '900', fontSize: '0.85rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
+                    >
+                        Find Matches
+                    </button>
+                    <button
+                        onClick={() => navigate('/play/my-matches')}
+                        style={{ padding: '8px 16px', borderRadius: '10px', background: 'transparent', border: 'none', color: 'var(--text-muted, #626762)', fontWeight: '800', fontSize: '0.85rem', cursor: 'pointer' }}
+                    >
+                        My Matches
+                    </button>
+                    <button
+                        onClick={() => navigate('/play/create')}
+                        style={{ padding: '8px 16px', borderRadius: '10px', background: 'var(--primary, #F5B91E)', border: 'none', color: '#000', fontWeight: '900', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                        <Plus size={16} strokeWidth={3} /> Create Match
+                    </button>
+                </div>
             </div>
 
             {/* Search & Filter Controls */}

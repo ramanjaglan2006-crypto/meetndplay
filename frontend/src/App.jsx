@@ -19,6 +19,7 @@ const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
 const Tournaments = lazy(() => import('./pages/Tournaments'));
 const MatchRoom = lazy(() => import('./pages/MatchRoom'));
 const CreateMatchPage = lazy(() => import('./pages/CreateMatchPage'));
+const MyMatchesPage = lazy(() => import('./pages/MyMatchesPage'));
 const Auth = lazy(() => import('./pages/Auth'));
 
 function AppRoutes() {
@@ -48,6 +49,8 @@ function AppRoutes() {
               <Routes>
                 <Route path="/" element={<Dashboard theme={theme} toggleTheme={toggleTheme} />} />
                 <Route path="/play" element={<PlayPage />} />
+                <Route path="/play/my-matches" element={<MyMatchesPage />} />
+                <Route path="/my-matches" element={<MyMatchesPage />} />
                 <Route path="/play/create" element={<CreateMatchPage />} />
                 <Route path="/create" element={<CreateMatchPage />} />
                 <Route path="/book" element={<BookPage />} />

@@ -85,6 +85,7 @@ export const getChannels = (communityId) => axios.get(`${API_BASE_URL}/channels/
 export const getMessages = (channelId) => axios.get(`${API_BASE_URL}/messages/${channelId}`);
 
 export const getMatches = () => axios.get(`${API_BASE_URL}/matches`);
+export const getMyMatches = () => API.get('/matches/my');
 export const createMatch = (matchData) => axios.post(`${API_BASE_URL}/matches`, matchData);
 export const joinMatch = (matchId, userId) => axios.post(`${API_BASE_URL}/matches/${matchId}/join`, { userId });
 export const leaveMatch = (matchId, userId) => axios.post(`${API_BASE_URL}/matches/${matchId}/leave`, { userId });
@@ -118,5 +119,3 @@ export const getMatchRoom = (matchId) => API.get(`/matches/${matchId}/room`);
 export const joinMatchWithPosition = (matchId, data) => API.post(`/matches/${matchId}/join`, data);
 export const updateMatchPosition = (matchId, position) => API.patch(`/matches/${matchId}/position`, { position });
 export const removeMatchParticipant = (matchId, userId) => API.delete(`/matches/${matchId}/players/${userId}`);
-
-
