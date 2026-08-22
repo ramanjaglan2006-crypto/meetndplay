@@ -18,8 +18,8 @@ const matchParticipationSchema = new mongoose.Schema({
   },
   position: {
     type: String,
-    enum: ['Goalkeeper', 'Defender', 'Midfielder', 'Winger', 'Striker'],
-    required: true
+    required: true,
+    default: 'Player'
   },
   positionType: {
     type: String,
